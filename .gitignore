@@ -1,6 +1,15 @@
 # .NET Core
 bin/
 obj/
+TestResults/
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+coverage.cobertura.xml
+*.nupkg
+*.snupkg
+*.log
 *.user
 *.userosscache
 *.sln.docstates
@@ -22,6 +31,7 @@ bazel-out/
 .env
 
 # IDEs / OS
+.vs/
 .vscode/
 .idea/
 *.suo

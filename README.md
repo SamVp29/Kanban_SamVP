@@ -73,6 +73,11 @@ El frontend (Angular 17) sigue una arquitectura modular, separando componentes d
 ## 8. Decisiones de Diseño
 
 - **Por qué Arquitectura Hexagonal:** En lugar de una arquitectura de 3 capas tradicional o Clean Architecture rígida, la Arquitectura Hexagonal ofrece el balance perfecto para aplicaciones de mediano a gran tamaño. Permite aislar completamente las reglas de negocio (Domain) de los detalles de implementación (BBDD, Web). Es más pragmática que Clean Architecture (que a veces introduce abstracciones excesivas), enfocándose en Puertos (Interfaces) y Adaptadores (Implementaciones).
+- **Aplicación de Principios SOLID:** El código se estructuró siguiendo firmemente estos principios:
+  - **SRP (Responsabilidad Única):** Separación estricta entre Controladores (exposición HTTP), Servicios (lógica de negocio) y Repositorios (acceso a datos).
+  - **OCP (Abierto/Cerrado):** Uso del Patrón Strategy / Factory para la generación de reportes (PDF/Excel), lo que permite incorporar nuevos formatos a futuro sin tocar el código existente.
+  - **LSP e ISP (Sustitución de Liskov y Segregación de Interfaces):** Uso de interfaces pequeñas y específicas inyectadas por dependencia, permitiendo reemplazar cualquier adaptador técnico (ej. cambiar EF Core por Dapper) sin romper el dominio.
+  - **DIP (Inversión de Dependencias):** El núcleo de la aplicación (`Application` y `Domain`) no depende de la base de datos ni de frameworks web, sino de interfaces (Puertos).
 - **Tiempo Real:** Se optó por **SignalR** porque provee una integración nativa y de altísimo rendimiento con .NET y clientes de Angular/JS.
 - **Gestión del Orden de las Tareas:** Para la persistencia del orden (Drag & Drop), las tareas utilizan un índice decimal/numérico espaciado (Rank) que evita recalcular todos los registros adyacentes cada vez que se mueve una tarjeta. (Estrategia de Lexicographical Ranking o espaciado flotante).
 - **Exportación Dual (PDF/Excel):** Se utiliza el **Patrón Strategy / Factory** junto con un único DTO, garantizando que el origen de los datos se consulte una sola vez y permitiendo que agregar futuros formatos (ej. CSV) sea tan fácil como crear una nueva clase que implemente la interfaz exportadora sin modificar código existente.
@@ -87,7 +92,47 @@ El frontend (Angular 17) sigue una arquitectura modular, separando componentes d
 
 ## 10. Diagrama ER
 
-*(Se agregará en la Fase 2 cuando se generen y consoliden los modelos de la base de datos)*
+```mermaid
+erDiagram
+    Usuario ||--o{ Tarea : "es asignado a"
+    Proyecto ||--o{ Columna : "contiene"
+    Columna ||--o{ Tarea : "agrupa"
+
+    Usuario {
+        uuid Id PK
+        string Nombre
+        string Correo
+        string PasswordHash
+        string PasswordSalt
+    }
+
+    Proyecto {
+        uuid Id PK
+        string Nombre
+        string Descripcion
+        datetime FechaInicio
+        datetime FechaFinPrevista
+        string Estado
+    }
+
+    Columna {
+        uuid Id PK
+        string Nombre
+        float Orden
+        uuid ProyectoId FK
+    }
+
+    Tarea {
+        uuid Id PK
+        string Titulo
+        string Descripcion
+        string Prioridad
+        uuid ResponsableId FK "Nullable"
+        uuid ColumnaId FK
+        float Orden
+        datetime FechaCreacion
+    }
+```
 
 ## 11. Uso de IA
 
