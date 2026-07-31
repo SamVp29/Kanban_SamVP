@@ -1,0 +1,32 @@
+# .NET Core
+bin/
+obj/
+*.user
+*.userosscache
+*.sln.docstates
+
+# Node / Angular
+node_modules/
+dist/
+tmp/
+out-tsc/
+bazel-out/
+.angular/
+
+# Docker
+.dockerignore
+!docker-compose.yml
+!Dockerfile
+
+# Environments
+.env
+
+# IDEs / OS
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.ide
+.DS_Store
+Thumbs.db
