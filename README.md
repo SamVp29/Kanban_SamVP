@@ -57,16 +57,25 @@ La base de datos se inicializa automáticamente (mediante Data Seeding en las mi
 - **Usuario 1:** admin@kanban.com / Contraseña: `Password123!`
 - **Usuario 2:** tester@kanban.com / Contraseña: `Password123!`
 
-(Las contraseñas se almacenan mediante un algoritmo de Hash + Salt en la base de datos).
+(Las contraseñas se almacenan cifradas en la base de datos utilizando el estándar de la industria **BCrypt** (coste 11), asegurando resistencia contra ataques de fuerza bruta).
+
+## 7. Ejecución por Fases (Metodología de Desarrollo)
+
+El desarrollo del Backend se organizó en 4 fases progresivas y atómicas para garantizar calidad y revisiones incrementales:
+
+1. **Fase 1 (Core y Persistencia):** Definición de las entidades del Dominio (con IDs enteros secuenciales para mayor legibilidad y depuración), mapeo en Entity Framework Core y creación del DbContext con reglas restrictivas y en cascada.
+2. **Fase 2 (Abstracción de Datos):** Implementación de **Puertos y Adaptadores** mediante el patrón genérico `Repository`, aislando la lógica de la base de datos para facilitar testing y futuras migraciones.
+3. **Fase 3 (Lógica y REST):** Creación de la capa de Aplicación (DTOs y Servicios de Negocio) y exposición de endpoints HTTP a través de Controladores en la WebApi.
+4. **Fase 4 (Seguridad):** Bloqueo de endpoints con atributos `[Authorize]`, implementación de un proveedor local de JWT y hashing criptográfico con BCrypt.
 
 ## 7. Arquitectura
 
 El backend ha sido construido utilizando **Arquitectura Hexagonal (Puertos y Adaptadores)**, dividida en las siguientes capas:
 
-- **Domain:** Contiene las entidades del negocio (`Usuario`, `Proyecto`, `Tarea`, etc.) y las interfaces (puertos) para repositorios. No tiene dependencias externas.
-- **Application:** Contiene la lógica de negocio, casos de uso (CQRS o Servicios) y DTOs. Implementa la lógica principal (e.j., restricciones de columnas o cálculo de ordenamiento).
-- **Infrastructure:** Implementa los puertos del dominio (Repositorios, DbContext de Entity Framework, servicios externos, SignalR hubs).
-- **WebApi:** Es la capa de presentación (Controladores REST), encargada de la inyección de dependencias y la configuración HTTP.
+- **Domain:** Contiene las entidades del negocio (`Usuario`, `Proyecto`, `Tarea`, etc.) y las interfaces (puertos) para repositorios. Es agnóstica a la tecnología y **no tiene dependencias externas**.
+- **Application:** Contiene la lógica de negocio, casos de uso y DTOs. Implementa la lógica principal (orquestación). Tampoco conoce detalles de la base de datos ni de la web.
+- **Infrastructure:** Implementa los puertos del dominio (Adaptadores: Repositorios específicos, DbContext de Entity Framework, y algoritmos de Hashing). Si en el futuro se desea migrar de PostgreSQL a MongoDB o SQL Server, solo se modifica o reemplaza esta capa sin tocar el resto del sistema.
+- **WebApi:** Es la capa de presentación (Controladores REST), encargada exclusivamente de mapear peticiones HTTP hacia la capa Application y configurar la Inyección de Dependencias.
 
 El frontend (Angular 17) sigue una arquitectura modular, separando componentes de presentación (UI) de componentes lógicos (smart components), con servicios centralizados para llamadas HTTP y suscripción al canal de tiempo real.
 
@@ -99,7 +108,7 @@ erDiagram
     Columna ||--o{ Tarea : "agrupa"
 
     Usuario {
-        uuid Id PK
+        int Id PK
         string Nombre
         string Correo
         string PasswordHash
@@ -107,7 +116,7 @@ erDiagram
     }
 
     Proyecto {
-        uuid Id PK
+        int Id PK
         string Nombre
         string Descripcion
         datetime FechaInicio
@@ -116,19 +125,19 @@ erDiagram
     }
 
     Columna {
-        uuid Id PK
+        int Id PK
         string Nombre
         float Orden
-        uuid ProyectoId FK
+        int ProyectoId FK
     }
 
     Tarea {
-        uuid Id PK
+        int Id PK
         string Titulo
         string Descripcion
         string Prioridad
-        uuid ResponsableId FK "Nullable"
-        uuid ColumnaId FK
+        int ResponsableId FK "Nullable"
+        int ColumnaId FK
         float Orden
         datetime FechaCreacion
     }
