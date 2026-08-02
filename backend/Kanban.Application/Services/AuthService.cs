@@ -13,11 +13,13 @@ public class AuthService : IAuthService
 {
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IConfiguration _configuration;
+    private readonly IPasswordHasher _passwordHasher;
 
-    public AuthService(IUsuarioRepository usuarioRepository, IConfiguration configuration)
+    public AuthService(IUsuarioRepository usuarioRepository, IConfiguration configuration, IPasswordHasher passwordHasher)
     {
         _usuarioRepository = usuarioRepository;
         _configuration = configuration;
+        _passwordHasher = passwordHasher;
     }
 
     public async Task<AuthResponseDto?> LoginAsync(LoginRequestDto dto)
@@ -25,9 +27,10 @@ public class AuthService : IAuthService
         var usuario = await _usuarioRepository.GetByEmailAsync(dto.Correo);
         if (usuario == null) return null;
 
-        // Por propósitos de evaluación rápida de la FASE 3, aquí verificamos un password dummy quemado en el seeder o asumimos éxito.
-        // OJO: En la FASE 4 o final ajustaremos el comparador real de hash+salt.
-        // Si usamos el seed: 'Password123!' -> hash=E0an3VvvUwW0vGI0DuDCmRhXah+h2DklrIDdQe1vXME=
+        if (!_passwordHasher.VerifyPassword(dto.Password, usuario.PasswordHash))
+        {
+            return null; // Contraseña incorrecta
+        }
         
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.ASCII.GetBytes(_configuration["JwtSettings:Secret"] ?? "super_secret_key_de_evaluacion_12345");
@@ -41,6 +44,8 @@ public class AuthService : IAuthService
                 new Claim(ClaimTypes.Name, usuario.Nombre)
             }),
             Expires = DateTime.UtcNow.AddHours(4),
+            Issuer = _configuration["JwtSettings:Issuer"],
+            Audience = _configuration["JwtSettings:Audience"],
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
         };
 

@@ -1,7 +1,5 @@
 using Kanban.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace Kanban.Infrastructure.Data;
 
@@ -46,9 +44,8 @@ public class ApplicationDbContext : DbContext
 
     private void SeedData(ModelBuilder modelBuilder)
     {
-        // Seeding de Usuarios
-        var salt1 = Guid.NewGuid().ToString();
-        var salt2 = Guid.NewGuid().ToString();
+        // Hash estático BCrypt (cost 11) para "Password123!" generado externamente para no ralentizar el inicio
+        var passwordHash = "$2a$11$0lA2YO/An/7Ybh/43wcH8.XgHkRCPlybm5uE1/LUJA8GssgLiiMZe";
 
         modelBuilder.Entity<Usuario>().HasData(
             new Usuario 
@@ -56,27 +53,17 @@ public class ApplicationDbContext : DbContext
                 Id = 1, 
                 Nombre = "Admin Kanban", 
                 Correo = "admin@kanban.com", 
-                PasswordSalt = salt1, 
-                PasswordHash = HashPassword("Password123!", salt1) 
+                PasswordSalt = "", // Ya no es necesario con BCrypt, pero la propiedad está en la entidad
+                PasswordHash = passwordHash 
             },
             new Usuario 
             { 
                 Id = 2, 
                 Nombre = "Tester Kanban", 
                 Correo = "tester@kanban.com", 
-                PasswordSalt = salt2, 
-                PasswordHash = HashPassword("Password123!", salt2) 
+                PasswordSalt = "", 
+                PasswordHash = passwordHash 
             }
         );
-    }
-
-    private string HashPassword(string password, string salt)
-    {
-        using var sha256 = SHA256.Create();
-        // Agregamos un pepper fijo de ejemplo (Recomendado en requerimientos)
-        string pepper = "K@nb4n_P3pp3r_2024!";
-        var bytes = Encoding.UTF8.GetBytes(password + salt + pepper);
-        var hash = sha256.ComputeHash(bytes);
-        return Convert.ToBase64String(hash);
     }
 }
