@@ -91,7 +91,7 @@ app.MapGet("/", context =>
     return Task.CompletedTask;
 });
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection(); // Comentado para evitar warnings en Docker (no tenemos cert HTTPS configurado localmente)
 
 app.UseAuthentication();
 app.UseAuthorization();
