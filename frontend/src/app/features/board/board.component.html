@@ -1,0 +1,116 @@
+<p-toast></p-toast>
+
+<div class="card p-3 shadow-2 border-round-xl">
+    <div class="flex justify-content-between align-items-center mb-4">
+        <div class="flex align-items-center gap-3">
+            <button pButton pRipple icon="pi pi-arrow-left" class="p-button-text p-button-secondary p-button-rounded" routerLink="/projects"></button>
+            <h4 class="m-0 font-bold text-color">Tablero Kanban</h4>
+        </div>
+        <div class="flex gap-2">
+            <button pButton pRipple icon="pi pi-file-pdf" class="p-button-outlined p-button-danger" pTooltip="Exportar PDF" (click)="exportPdf()"></button>
+            <button pButton pRipple icon="pi pi-file-excel" class="p-button-outlined p-button-success" pTooltip="Exportar Excel" (click)="exportExcel()"></button>
+            <button pButton pRipple label="Nueva Columna" icon="pi pi-plus" class="p-button-outlined p-button-secondary ml-2" (click)="openNewColumn()"></button>
+        </div>
+    </div>
+
+    <!-- Scrollable Board Container -->
+    <div class="flex overflow-x-auto gap-4 pb-3" style="min-height: 70vh;" cdkDropListGroup>
+        
+        <div *ngIf="loading" class="flex w-full justify-content-center align-items-center">
+            <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+        </div>
+
+        <ng-container *ngIf="!loading">
+            <!-- Kanban Column -->
+            <div *ngFor="let col of columns" class="surface-ground border-round-lg shadow-1 flex flex-column flex-shrink-0" style="width: 320px; background: var(--surface-b);">
+                
+                <!-- Column Header -->
+                <div class="p-3 border-bottom-1 surface-border flex justify-content-between align-items-center border-round-top-lg surface-section">
+                    <h6 class="m-0 font-bold text-lg text-color">{{ col.nombre }} <span class="text-500 font-normal ml-2">({{col.tareas?.length || 0}})</span></h6>
+                    <div class="flex gap-1">
+                        <button pButton pRipple icon="pi pi-plus" class="p-button-text p-button-sm p-button-success p-button-rounded" (click)="openNewTask(col.id)" pTooltip="Añadir Tarea"></button>
+                        <button pButton pRipple icon="pi pi-pencil" class="p-button-text p-button-sm p-button-secondary p-button-rounded" (click)="editColumn(col)" pTooltip="Editar Columna"></button>
+                        <button pButton pRipple icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger p-button-rounded" (click)="deleteColumn(col)" pTooltip="Eliminar Columna"></button>
+                    </div>
+                </div>
+
+                <!-- Column Body (Droppable Area) -->
+                <div class="p-3 flex-1 overflow-y-auto" style="min-height: 150px;" 
+                     cdkDropList [cdkDropListData]="col.tareas" (cdkDropListDropped)="drop($event, col.id)">
+                    
+                    <!-- Empty State Placeholder -->
+                    <div *ngIf="!col.tareas || col.tareas.length === 0" class="text-center text-500 font-italic py-3">
+                        Arrastra una tarea aquí
+                    </div>
+
+                    <!-- Task Card (Draggable) -->
+                    <div *ngFor="let task of col.tareas" cdkDrag class="surface-card mb-3 p-3 border-round shadow-2 cursor-move hover:shadow-4 transition-duration-200 border-left-3 border-primary">
+                        <div class="flex justify-content-between align-items-start mb-2">
+                            <span class="font-bold text-color">{{ task.titulo }}</span>
+                            <div class="flex gap-1">
+                                <button pButton pRipple icon="pi pi-pencil" class="p-button-text p-button-sm p-0 w-2rem h-2rem text-500 hover:text-primary" (click)="editTask(task)"></button>
+                                <button pButton pRipple icon="pi pi-trash" class="p-button-text p-button-sm p-button-danger p-0 w-2rem h-2rem hover:text-red-500" (click)="deleteTask(task)"></button>
+                            </div>
+                        </div>
+                        <p class="text-600 text-sm mt-0 mb-3 line-height-3" style="display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">
+                            {{ task.descripcion }}
+                        </p>
+                        <div class="flex flex-column gap-2 mt-auto">
+                            <div class="flex justify-content-between align-items-center">
+                                <p-tag [value]="task.prioridad" [severity]="getPrioritySeverity(task.prioridad)"></p-tag>
+                                <span class="text-500 text-xs"><i class="pi pi-clock mr-1"></i>{{ task.fechaCreacion | date:'MMM d' }}</span>
+                            </div>
+                            <div class="flex align-items-center text-600 text-xs" *ngIf="task.responsableId">
+                                <i class="pi pi-user mr-2 text-primary"></i>
+                                <span class="font-medium">{{ getResponsableName(task.responsableId) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </ng-container>
+    </div>
+</div>
+
+<!-- Modal Columna -->
+<p-dialog [(visible)]="colDialog" [style]="{width: '450px'}" [header]="colForm.id ? 'Editar Columna' : 'Nueva Columna'" [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="field">
+            <label for="colName">Nombre</label>
+            <input type="text" pInputText id="colName" [(ngModel)]="colForm.nombre" required autofocus [ngClass]="{'ng-invalid ng-dirty': submitted && !colForm.nombre}"/>
+            <small class="ng-dirty ng-invalid text-red-500" *ngIf="submitted && !colForm.nombre">El nombre es requerido.</small>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="colDialog = false"></button>
+        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text" (click)="saveColumn()"></button>
+    </ng-template>
+</p-dialog>
+
+<!-- Modal Tarea -->
+<p-dialog [(visible)]="taskDialog" [style]="{width: '500px'}" [header]="taskForm.id ? 'Editar Tarea' : 'Nueva Tarea'" [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="field">
+            <label for="titulo">Título</label>
+            <input type="text" pInputText id="titulo" [(ngModel)]="taskForm.titulo" required autofocus [ngClass]="{'ng-invalid ng-dirty': submitted && !taskForm.titulo}"/>
+            <small class="ng-dirty ng-invalid text-red-500" *ngIf="submitted && !taskForm.titulo">El título es requerido.</small>
+        </div>
+        <div class="field">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" pInputTextarea [(ngModel)]="taskForm.descripcion" rows="4"></textarea>
+        </div>
+        <div class="field">
+            <label for="prioridad">Prioridad</label>
+            <p-dropdown [options]="priorities" [(ngModel)]="taskForm.prioridad" name="prioridad" [editable]="true" appendTo="body"></p-dropdown>
+        </div>
+        <div class="field mt-3">
+            <label for="responsable">Responsable</label>
+            <p-dropdown [options]="usuarios" [(ngModel)]="taskForm.responsableId" name="responsable" optionLabel="label" optionValue="value" placeholder="Seleccione un Responsable" [showClear]="true" [editable]="true" appendTo="body"></p-dropdown>
+        </div>
+    </ng-template>
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="taskDialog = false"></button>
+        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text p-button-primary" (click)="saveTask()"></button>
+    </ng-template>
+</p-dialog>

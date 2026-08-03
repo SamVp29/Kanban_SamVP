@@ -1,0 +1,97 @@
+<p-toast></p-toast>
+
+<div class="grid">
+    <div class="col-12">
+        <div class="card">
+            <h5>Gestión de Proyectos</h5>
+
+            <div class="flex justify-content-between flex-column sm:flex-row mb-3">
+                <button pButton pRipple label="Nuevo Proyecto" icon="pi pi-plus" class="p-button-success mb-2" (click)="openNew()"></button>
+                <span class="p-input-icon-left mb-2">
+                    <i class="pi pi-search"></i>
+                    <input pInputText type="text" [(ngModel)]="globalFilter" (input)="onSearch()" placeholder="Buscar por nombre..." class="w-full"/>
+                </span>
+            </div>
+
+            <p-table [value]="projects" [lazy]="true" (onLazyLoad)="loadProjects($event)" dataKey="id"
+                [paginator]="true" [rows]="10" [totalRecords]="totalRecords" [loading]="loading"
+                responsiveLayout="scroll">
+                
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Inicio</th>
+                        <th>Fin Previsto</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="body" let-project>
+                    <tr>
+                        <td style="min-width: 12rem;">{{project.nombre}}</td>
+                        <td style="min-width: 14rem;">{{project.descripcion}}</td>
+                        <td style="min-width: 10rem;">{{project.fechaInicio | date:'shortDate'}}</td>
+                        <td style="min-width: 10rem;">{{project.fechaFinPrevista ? (project.fechaFinPrevista | date:'shortDate') : '-'}}</td>
+                        <td style="min-width: 8rem;">
+                            <span [class]="'customer-badge status-' + (project.estado === 'Activo' ? 'qualified' : 'unqualified')">{{project.estado}}</span>
+                        </td>
+                        <td>
+                            <div class="flex">
+                                <button pButton pRipple icon="pi pi-th-large" class="p-button-rounded p-button-info mr-2" (click)="openBoard(project)" pTooltip="Abrir Tablero"></button>
+                                <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" (click)="editProject(project)" pTooltip="Editar"></button>
+                                <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-danger" (click)="deleteProject(project)" pTooltip="Eliminar"></button>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                
+                <ng-template pTemplate="emptymessage">
+                    <tr>
+                        <td colspan="6">No se encontraron proyectos.</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    </div>
+</div>
+
+<p-dialog [(visible)]="projectDialog" [style]="{width: '450px'}" header="Detalles del Proyecto" [modal]="true" class="p-fluid">
+    <ng-template pTemplate="content">
+        <div class="field">
+            <label for="nombre">Nombre</label>
+            <input type="text" pInputText id="nombre" [(ngModel)]="project.nombre" required autofocus [ngClass]="{'ng-invalid ng-dirty': submitted && !project.nombre}"/>
+            <small class="ng-dirty ng-invalid text-red-500" *ngIf="submitted && !project.nombre">El nombre es requerido.</small>
+        </div>
+        
+        <div class="field">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" pInputTextarea [(ngModel)]="project.descripcion" required rows="3" cols="20"></textarea>
+        </div>
+        
+        <div class="field">
+            <label for="fechaInicio">Fecha de Inicio</label>
+            <input type="date" pInputText id="fechaInicio" [(ngModel)]="project.fechaInicio" />
+        </div>
+        
+        <div class="field">
+            <label for="fechaFin">Fecha Fin Prevista</label>
+            <input type="date" pInputText id="fechaFin" [(ngModel)]="project.fechaFinPrevista" />
+        </div>
+        
+        <div class="field">
+            <label for="estado">Estado</label>
+            <select id="estado" pInputText [(ngModel)]="project.estado">
+                <option value="Activo">Activo</option>
+                <option value="Pausado">Pausado</option>
+                <option value="Completado">Completado</option>
+            </select>
+        </div>
+    </ng-template>
+    
+    <ng-template pTemplate="footer">
+        <button pButton pRipple label="Cancelar" icon="pi pi-times" class="p-button-text" (click)="projectDialog = false"></button>
+        <button pButton pRipple label="Guardar" icon="pi pi-check" class="p-button-text" (click)="saveProject()"></button>
+    </ng-template>
+</p-dialog>
