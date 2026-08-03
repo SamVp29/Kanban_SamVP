@@ -92,6 +92,11 @@ app.MapGet("/", context =>
 });
 
 // app.UseHttpsRedirection(); // Comentado para evitar warnings en Docker (no tenemos cert HTTPS configurado localmente)
+app.UseCors(builder => builder
+    .SetIsOriginAllowed(origin => true) // Permitir cualquier origen (localhost:4200, etc)
+    .AllowAnyMethod()
+    .AllowAnyHeader()
+    .AllowCredentials());
 
 app.UseAuthentication();
 app.UseAuthorization();
