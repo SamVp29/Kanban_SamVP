@@ -73,8 +73,8 @@ public class ProyectoService : IProyectoService
         {
             Nombre = dto.Nombre,
             Descripcion = dto.Descripcion,
-            FechaInicio = dto.FechaInicio,
-            FechaFinPrevista = dto.FechaFinPrevista,
+            FechaInicio = dto.FechaInicio.ToUniversalTime(),
+            FechaFinPrevista = dto.FechaFinPrevista?.ToUniversalTime(),
             Estado = "Activo"
         };
 
@@ -98,8 +98,8 @@ public class ProyectoService : IProyectoService
 
         proyecto.Nombre = dto.Nombre;
         proyecto.Descripcion = dto.Descripcion;
-        proyecto.FechaInicio = dto.FechaInicio;
-        proyecto.FechaFinPrevista = dto.FechaFinPrevista;
+        proyecto.FechaInicio = dto.FechaInicio.ToUniversalTime();
+        proyecto.FechaFinPrevista = dto.FechaFinPrevista?.ToUniversalTime();
 
         await _proyectoRepository.UpdateAsync(proyecto);
         return true;

@@ -14,6 +14,9 @@ public static class DependencyInjection
         services.AddScoped<IColumnaRepository, ColumnaRepository>();
         services.AddScoped<ITareaRepository, TareaRepository>();
 
+        services.AddScoped<Kanban.Application.Reports.IReportGenerator, Kanban.Infrastructure.Reports.PdfReportGenerator>();
+        services.AddScoped<Kanban.Application.Reports.IReportGenerator, Kanban.Infrastructure.Reports.ExcelReportGenerator>();
+
         return services;
     }
 }

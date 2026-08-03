@@ -13,6 +13,7 @@ public static class DependencyInjection
         services.AddScoped<ITareaService, TareaService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        services.AddScoped<Kanban.Application.Reports.IReportService, Kanban.Application.Reports.ReportService>();
 
         return services;
     }
