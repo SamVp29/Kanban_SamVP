@@ -40,3 +40,5 @@ bazel-out/
 *.sln.ide
 .DS_Store
 Thumbs.db
+/scratch/
+/sakai-ng/
