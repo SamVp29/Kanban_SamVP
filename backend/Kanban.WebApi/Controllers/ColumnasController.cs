@@ -3,6 +3,9 @@ using Kanban.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+using Microsoft.AspNetCore.SignalR;
+using Kanban.WebApi.Hubs;
+
 namespace Kanban.WebApi.Controllers;
 
 [Authorize]
@@ -11,10 +14,12 @@ namespace Kanban.WebApi.Controllers;
 public class ColumnasController : ControllerBase
 {
     private readonly IColumnaService _columnaService;
+    private readonly IHubContext<KanbanHub> _hubContext;
 
-    public ColumnasController(IColumnaService columnaService)
+    public ColumnasController(IColumnaService columnaService, IHubContext<KanbanHub> hubContext)
     {
         _columnaService = columnaService;
+        _hubContext = hubContext;
     }
 
     [HttpGet("proyecto/{proyectoId:int}")]
@@ -28,14 +33,17 @@ public class ColumnasController : ControllerBase
     public async Task<ActionResult<ColumnaResponseDto>> Create(ColumnaCreateDto dto)
     {
         var columna = await _columnaService.CreateAsync(dto);
-        return Created("", columna); // Idealmente usar CreatedAtAction pero la ruta es diferente
+        await _hubContext.Clients.Group(dto.ProyectoId.ToString()).SendAsync("BoardUpdated");
+        return Created("", columna);
     }
 
     [HttpPut("{id:int}")]
     public async Task<ActionResult> Update(int id, [FromBody] string nuevoNombre)
     {
+        var proyectoId = await _columnaService.GetProyectoIdByColumnaIdAsync(id);
         var success = await _columnaService.UpdateAsync(id, nuevoNombre);
         if (!success) return NotFound();
+        await _hubContext.Clients.Group(proyectoId.ToString()).SendAsync("BoardUpdated");
         return NoContent();
     }
 
@@ -44,8 +52,10 @@ public class ColumnasController : ControllerBase
     {
         try
         {
+            var proyectoId = await _columnaService.GetProyectoIdByColumnaIdAsync(id);
             var success = await _columnaService.DeleteAsync(id);
             if (!success) return NotFound();
+            await _hubContext.Clients.Group(proyectoId.ToString()).SendAsync("BoardUpdated");
             return NoContent();
         }
         catch (InvalidOperationException ex)

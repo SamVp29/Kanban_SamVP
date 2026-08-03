@@ -59,6 +59,19 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime = true,
             ClockSkew = TimeSpan.Zero
         };
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/kanban"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 // Configurar DbContext
@@ -68,6 +81,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Inyectar Dependencias de Capas
 builder.Services.AddInfrastructure();
 builder.Services.AddApplication();
+builder.Services.AddSignalR(); // AÑADIDO PARA SIGNALR
 
 var app = builder.Build();
 
@@ -102,5 +116,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<Kanban.WebApi.Hubs.KanbanHub>("/hubs/kanban");
 
 app.Run();

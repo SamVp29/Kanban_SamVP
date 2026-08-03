@@ -76,4 +76,11 @@ public class ColumnaService : IColumnaService
         await _columnaRepository.DeleteAsync(columna);
         return true;
     }
+
+    public async Task<int> GetProyectoIdByColumnaIdAsync(int id)
+    {
+        var columna = await _columnaRepository.GetByIdAsync(id);
+        if (columna == null) throw new KeyNotFoundException("Columna no encontrada");
+        return columna.ProyectoId;
+    }
 }

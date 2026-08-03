@@ -58,4 +58,15 @@ public class AuthService : IAuthService
             Nombre = usuario.Nombre
         };
     }
+
+    public async Task<IEnumerable<UsuarioResponseDto>> GetAllUsersAsync()
+    {
+        var users = await _usuarioRepository.GetAllAsync();
+        return users.Select(u => new UsuarioResponseDto
+        {
+            Id = u.Id,
+            Nombre = u.Nombre,
+            Correo = u.Correo
+        });
+    }
 }

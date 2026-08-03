@@ -96,4 +96,11 @@ public class TareaService : ITareaService
         await _tareaRepository.UpdateAsync(tarea);
         return true;
     }
+
+    public async Task<int> GetColumnaIdByTareaIdAsync(int id)
+    {
+        var tarea = await _tareaRepository.GetByIdAsync(id);
+        if (tarea == null) throw new KeyNotFoundException("Tarea no encontrada");
+        return tarea.ColumnaId;
+    }
 }

@@ -2,6 +2,8 @@ using Kanban.Application.DTOs;
 using Kanban.Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Kanban.WebApi.Hubs;
 
 namespace Kanban.WebApi.Controllers;
 
@@ -11,10 +13,14 @@ namespace Kanban.WebApi.Controllers;
 public class TareasController : ControllerBase
 {
     private readonly ITareaService _tareaService;
+    private readonly IColumnaService _columnaService;
+    private readonly IHubContext<KanbanHub> _hubContext;
 
-    public TareasController(ITareaService tareaService)
+    public TareasController(ITareaService tareaService, IColumnaService columnaService, IHubContext<KanbanHub> hubContext)
     {
         _tareaService = tareaService;
+        _columnaService = columnaService;
+        _hubContext = hubContext;
     }
 
     [HttpGet("columna/{columnaId:int}")]
@@ -28,6 +34,8 @@ public class TareasController : ControllerBase
     public async Task<ActionResult<TareaResponseDto>> Create(TareaCreateDto dto)
     {
         var tarea = await _tareaService.CreateAsync(dto);
+        var proyectoId = await _columnaService.GetProyectoIdByColumnaIdAsync(dto.ColumnaId);
+        await _hubContext.Clients.Group(proyectoId.ToString()).SendAsync("BoardUpdated");
         return Created("", tarea);
     }
 
@@ -36,15 +44,29 @@ public class TareasController : ControllerBase
     {
         var success = await _tareaService.UpdateAsync(id, dto);
         if (!success) return NotFound();
+        var proyectoId = await _columnaService.GetProyectoIdByColumnaIdAsync(dto.ColumnaId);
+        await _hubContext.Clients.Group(proyectoId.ToString()).SendAsync("BoardUpdated");
         return NoContent();
     }
 
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Delete(int id)
     {
-        var success = await _tareaService.DeleteAsync(id);
-        if (!success) return NotFound();
-        return NoContent();
+        try
+        {
+            var columnaId = await _tareaService.GetColumnaIdByTareaIdAsync(id);
+            var proyectoId = await _columnaService.GetProyectoIdByColumnaIdAsync(columnaId);
+            
+            var success = await _tareaService.DeleteAsync(id);
+            if (!success) return NotFound();
+            
+            await _hubContext.Clients.Group(proyectoId.ToString()).SendAsync("BoardUpdated");
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
     }
 
     [HttpPut("mover")]
@@ -52,6 +74,8 @@ public class TareasController : ControllerBase
     {
         var success = await _tareaService.MoverTareaAsync(dto);
         if (!success) return NotFound();
+        var proyectoId = await _columnaService.GetProyectoIdByColumnaIdAsync(dto.NuevaColumnaId);
+        await _hubContext.Clients.Group(proyectoId.ToString()).SendAsync("BoardUpdated");
         return NoContent();
     }
 }
