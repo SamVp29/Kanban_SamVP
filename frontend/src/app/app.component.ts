@@ -1,13 +1,15 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, OnInit } from '@angular/core';
+import { PrimeNGConfig } from 'primeng/api';
 
 @Component({
-  selector: 'app-root',
-  standalone: true,
-  imports: [RouterOutlet],
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.scss'
+    selector: 'app-root',
+    templateUrl: './app.component.html'
 })
-export class AppComponent {
-  title = 'frontend';
+export class AppComponent implements OnInit {
+
+    constructor(private primengConfig: PrimeNGConfig) { }
+
+    ngOnInit() {
+        this.primengConfig.ripple = true;
+    }
 }
