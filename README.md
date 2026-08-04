@@ -58,9 +58,22 @@ docker-compose down -v
 
 ---
 
-## 🔑 2. Usuarios de Prueba (Data Seeding)
+## 🗄️ 2. Migraciones y Usuarios de Prueba (Data Seeding)
 
-La base de datos se inicializa automáticamente mediante **EF Core Migrations Data Seeding** con los siguientes usuarios cifrados mediante **BCrypt** (coste 11):
+### Ejecución Automática de Migraciones
+La base de datos PostgreSQL se sincroniza automáticamente mediante **Entity Framework Core Migrations**.
+- **En entorno contenedorizado (Docker / Producción):** Al ejecutar `docker-compose up`, la aplicación backend invoca `db.Database.Migrate()` en `Program.cs`, creando las tablas, relaciones e índices automáticamente sin intervención manual.
+- **En entorno manual (CLI):** Puedes aplicar o generar migraciones con los siguientes comandos desde la carpeta `backend/`:
+  ```bash
+  # Crear una nueva migración
+  dotnet ef migrations add <NombreMigracion> --project Kanban.Infrastructure --startup-project Kanban.WebApi
+
+  # Aplicar migraciones pendientes
+  dotnet ef database update --project Kanban.Infrastructure --startup-project Kanban.WebApi
+  ```
+
+### Datos Semilla Precargados (Data Seeding)
+En `ApplicationDbContext.cs` (`SeedData`), se precargan los usuarios iniciales cifrados con **BCrypt** (coste 11):
 
 | Usuario | Correo Electrónico | Contraseña | Rol / Propósito |
 | :--- | :--- | :--- | :--- |
@@ -81,7 +94,8 @@ Kanban_SamVP/
 │   ├── Kanban.Domain/          # Núcleo de Dominio (Entidades puras, Interfaces de repositorios)
 │   ├── Kanban.Application/     # Casos de Uso (DTOs, Servicios de Negocio, Reportes Strategy)
 │   ├── Kanban.Infrastructure/  # Adaptadores (DbContext EF Core, Repositorios, QuestPDF, EPPlus)
-│   └── Kanban.WebApi/          # Presentación HTTP (Controllers REST, Hubs SignalR, Program.cs)
+│   ├── Kanban.WebApi/          # Presentación HTTP (Controllers REST, Hubs SignalR, Program.cs)
+│   └── Kanban.UnitTests/       # Pruebas Automatizadas Backend (xUnit, Moq, FluentAssertions)
 │
 ├── frontend/src/
 │   ├── app/
@@ -157,7 +171,31 @@ Para evitar archivos irrelevantes y garantizar la mantenibilidad del código:
 
 ---
 
-## 🤖 7. Declaración del Uso de Asistentes de Inteligencia Artificial (IA)
+## 🧪 7. Pruebas Automatizadas (Sección 6.9 del PDF)
+
+El proyecto incluye un total de **13 pruebas unitarias automatizadas** (6 en Backend y 7 en Frontend), ejecutando y pasando al 100%.
+
+### Ejecución de Pruebas en Backend (.NET 8 xUnit)
+```bash
+dotnet test backend/Kanban.UnitTests/Kanban.UnitTests.csproj
+```
+- **Prueba Obligatoria de Cálculo de Posición:** `CrearTareaAsync_DebeCalcularNuevaPosicionLexicografica_CuandoSeAgregaUnaTarea` (verifica el ranking de posición $maxOrden + 65536$).
+- **Regla de Negocio de Columnas:** `DeleteAsync_DebeLanzarExcepcion_CuandoColumnaTieneTareas` (bloquea el borrado de columna no vacía con `InvalidOperationException`).
+- **Pruebas de Servicios:** Paginación de proyectos, movimiento de tareas y generación de DTO de reportes.
+
+### Ejecución de Pruebas en Frontend (Angular 17 Jasmine / Karma)
+```bash
+cd frontend
+npm run test -- --watch=false
+```
+- **`AuthGuard`:** Cobertura de bloqueo de rutas sin token JWT y navegación permitida con sesión activa.
+- **`AuthInterceptor`:** Cobertura de inserción del header Bearer y captura de respuestas HTTP 401.
+- **`KanbanService`:** Verificación de llamada REST a `PUT /Tareas/mover`.
+- **`BoardComponent`:** Filtrado reactivo de tarjetas por búsqueda de texto y prioridad.
+
+---
+
+## 🤖 8. Declaración del Uso de Asistentes de Inteligencia Artificial (IA)
 
 En cumplimiento de las especificaciones de la prueba técnica (Secciones 8 y 9), se declara el uso transparente y supervisado de **Antigravity AI (Gemini 3.6 Flash)** como herramienta auxiliar de desarrollo en las siguientes áreas:
 
