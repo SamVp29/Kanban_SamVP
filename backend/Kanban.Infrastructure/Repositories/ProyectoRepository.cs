@@ -29,4 +29,13 @@ public class ProyectoRepository : Repository<Proyecto>, IProyectoRepository
 
         return (items, totalCount);
     }
+
+    public async Task<Proyecto?> GetProyectoCompletoReporteAsync(int id)
+    {
+        return await _dbSet
+            .Include(p => p.Columnas)
+                .ThenInclude(c => c.Tareas)
+                    .ThenInclude(t => t.Responsable)
+            .FirstOrDefaultAsync(p => p.Id == id);
+    }
 }

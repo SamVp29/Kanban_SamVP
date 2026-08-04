@@ -17,11 +17,16 @@ public class ReportesController : ControllerBase
     }
 
     [HttpGet("{proyectoId:int}")]
-    public async Task<IActionResult> Export(int proyectoId, [FromQuery] string format = "pdf")
+    public async Task<IActionResult> Export(
+        int proyectoId, 
+        [FromQuery] string format = "pdf",
+        [FromQuery] string? prioridad = null,
+        [FromQuery] int? responsableId = null,
+        [FromQuery] string? texto = null)
     {
         try
         {
-            var content = await _reportService.GenerateReportAsync(proyectoId, format);
+            var content = await _reportService.GenerateReportAsync(proyectoId, format, prioridad, responsableId, texto);
             
             if (format.ToLower() == "pdf")
             {

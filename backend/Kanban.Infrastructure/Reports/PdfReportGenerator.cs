@@ -64,8 +64,9 @@ public class PdfReportGenerator : IReportGenerator
                     table.ColumnsDefinition(columns =>
                     {
                         columns.RelativeColumn(3);
-                        columns.RelativeColumn(5);
+                        columns.RelativeColumn(4);
                         columns.RelativeColumn(2);
+                        columns.RelativeColumn(3);
                         columns.RelativeColumn(2);
                     });
 
@@ -74,6 +75,7 @@ public class PdfReportGenerator : IReportGenerator
                         header.Cell().Element(CellStyle).Text("Título");
                         header.Cell().Element(CellStyle).Text("Descripción");
                         header.Cell().Element(CellStyle).Text("Prioridad");
+                        header.Cell().Element(CellStyle).Text("Responsable");
                         header.Cell().Element(CellStyle).Text("Fecha");
 
                         static IContainer CellStyle(IContainer container)
@@ -87,6 +89,7 @@ public class PdfReportGenerator : IReportGenerator
                         table.Cell().Element(CellStyle).Text(tarea.Titulo);
                         table.Cell().Element(CellStyle).Text(tarea.Descripcion);
                         table.Cell().Element(CellStyle).Text(tarea.Prioridad);
+                        table.Cell().Element(CellStyle).Text(tarea.Responsable ?? "Sin asignar");
                         table.Cell().Element(CellStyle).Text(tarea.FechaCreacion.ToString("dd/MM/yyyy"));
 
                         static IContainer CellStyle(IContainer container)

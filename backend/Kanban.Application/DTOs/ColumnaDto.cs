@@ -13,3 +13,9 @@ public class ColumnaResponseDto
     public double Orden { get; set; }
     public int ProyectoId { get; set; }
 }
+
+public class ColumnaMoverDto
+{
+    public int ColumnaId { get; set; }
+    public double NuevoOrden { get; set; }
+}

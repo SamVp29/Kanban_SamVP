@@ -7,22 +7,16 @@ public class ReportService : IReportService
 {
     private readonly IEnumerable<IReportGenerator> _generators;
     private readonly IProyectoRepository _proyectoRepository;
-    private readonly IColumnaRepository _columnaRepository;
-    private readonly ITareaRepository _tareaRepository;
 
     public ReportService(
         IEnumerable<IReportGenerator> generators,
-        IProyectoRepository proyectoRepository,
-        IColumnaRepository columnaRepository,
-        ITareaRepository tareaRepository)
+        IProyectoRepository proyectoRepository)
     {
         _generators = generators;
         _proyectoRepository = proyectoRepository;
-        _columnaRepository = columnaRepository;
-        _tareaRepository = tareaRepository;
     }
 
-    public async Task<byte[]> GenerateReportAsync(int proyectoId, string format)
+    public async Task<byte[]> GenerateReportAsync(int proyectoId, string format, string? prioridad = null, int? responsableId = null, string? texto = null)
     {
         var generator = _generators.FirstOrDefault(g => g.Format.Equals(format, StringComparison.OrdinalIgnoreCase));
         if (generator == null)
@@ -30,16 +24,15 @@ public class ReportService : IReportService
             throw new NotSupportedException($"El formato de reporte '{format}' no está soportado.");
         }
 
-        var data = await BuildReportDataAsync(proyectoId);
+        var data = await BuildReportDataAsync(proyectoId, prioridad, responsableId, texto);
         return generator.Generate(data);
     }
 
-    private async Task<ProyectoReportDto> BuildReportDataAsync(int proyectoId)
+    private async Task<ProyectoReportDto> BuildReportDataAsync(int proyectoId, string? prioridad, int? responsableId, string? texto)
     {
-        var proyecto = await _proyectoRepository.GetByIdAsync(proyectoId);
+        var proyecto = await _proyectoRepository.GetProyectoCompletoReporteAsync(proyectoId);
         if (proyecto == null) throw new KeyNotFoundException("Proyecto no encontrado");
 
-        var columnas = await _columnaRepository.GetByProyectoIdAsync(proyectoId);
         var reportData = new ProyectoReportDto
         {
             ProyectoId = proyecto.Id,
@@ -49,20 +42,37 @@ public class ReportService : IReportService
             Columnas = new List<ColumnaReportDto>()
         };
 
-        foreach (var col in columnas.OrderBy(c => c.Orden))
+        foreach (var col in proyecto.Columnas.OrderBy(c => c.Orden))
         {
-            var tareas = await _tareaRepository.GetByColumnaIdAsync(col.Id);
+            var tareasQuery = col.Tareas.AsEnumerable();
+
+            if (!string.IsNullOrWhiteSpace(prioridad))
+            {
+                tareasQuery = tareasQuery.Where(t => t.Prioridad.Equals(prioridad, StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (responsableId.HasValue)
+            {
+                tareasQuery = tareasQuery.Where(t => t.ResponsableId == responsableId.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(texto))
+            {
+                tareasQuery = tareasQuery.Where(t => 
+                    t.Titulo.ToLower().Contains(texto.ToLower()) || 
+                    t.Descripcion.ToLower().Contains(texto.ToLower()));
+            }
+
             var colDto = new ColumnaReportDto
             {
                 NombreColumna = col.Nombre,
-                Tareas = tareas.OrderBy(t => t.Orden).Select(t => new TareaReportDto
+                Tareas = tareasQuery.OrderBy(t => t.Orden).Select(t => new TareaReportDto
                 {
                     Titulo = t.Titulo,
                     Descripcion = t.Descripcion,
                     Prioridad = t.Prioridad,
                     FechaCreacion = t.FechaCreacion,
-                    // Si tienes el Responsable incluido, podrías usar t.Responsable?.Nombre. Por ahora null.
-                    Responsable = null 
+                    Responsable = t.Responsable?.Nombre ?? "Sin asignar"
                 }).ToList()
             };
             reportData.Columnas.Add(colDto);

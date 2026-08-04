@@ -47,6 +47,16 @@ public class ColumnasController : ControllerBase
         return NoContent();
     }
 
+    [HttpPut("mover")]
+    public async Task<ActionResult> Mover([FromBody] ColumnaMoverDto dto)
+    {
+        var proyectoId = await _columnaService.GetProyectoIdByColumnaIdAsync(dto.ColumnaId);
+        var success = await _columnaService.ReordenarColumnaAsync(dto.ColumnaId, dto.NuevoOrden);
+        if (!success) return NotFound();
+        await _hubContext.Clients.Group(proyectoId.ToString()).SendAsync("BoardUpdated");
+        return NoContent();
+    }
+
     [HttpDelete("{id:int}")]
     public async Task<ActionResult> Delete(int id)
     {

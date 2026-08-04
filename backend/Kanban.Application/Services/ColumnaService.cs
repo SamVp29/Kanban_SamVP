@@ -77,6 +77,16 @@ public class ColumnaService : IColumnaService
         return true;
     }
 
+    public async Task<bool> ReordenarColumnaAsync(int columnaId, double nuevoOrden)
+    {
+        var columna = await _columnaRepository.GetByIdAsync(columnaId);
+        if (columna == null) return false;
+
+        columna.Orden = nuevoOrden;
+        await _columnaRepository.UpdateAsync(columna);
+        return true;
+    }
+
     public async Task<int> GetProyectoIdByColumnaIdAsync(int id)
     {
         var columna = await _columnaRepository.GetByIdAsync(id);
