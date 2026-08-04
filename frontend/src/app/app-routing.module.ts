@@ -1,6 +1,6 @@
 import { RouterModule } from '@angular/router';
 import { NgModule } from '@angular/core';
-import { NotfoundComponent } from './demo/components/notfound/notfound.component';
+import { NotfoundComponent } from './pages/notfound/notfound.component';
 import { AppLayoutComponent } from "./layout/app.layout.component";
 import { authGuard } from './core/services/auth.guard';
 
@@ -16,7 +16,7 @@ import { authGuard } from './core/services/auth.guard';
                     { path: 'board/:id', loadComponent: () => import('./features/board/board.component').then(m => m.BoardComponent) }
                 ]
             },
-            { path: 'auth', loadChildren: () => import('./demo/components/auth/auth.module').then(m => m.AuthModule) },
+            { path: 'auth', loadChildren: () => import('./pages/auth/auth.module').then(m => m.AuthModule) },
             { path: 'notfound', component: NotfoundComponent },
             { path: '**', redirectTo: '/notfound' },
         ], { scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled', onSameUrlNavigation: 'reload' })
