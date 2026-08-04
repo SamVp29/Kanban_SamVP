@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Kanban.Application.Services;
+using Kanban.Application.Services.Interfaces;
 using Kanban.Domain.Entities;
 using Kanban.Domain.Interfaces;
 using Moq;
@@ -11,13 +12,15 @@ public class ColumnaServiceTests
 {
     private readonly Mock<IColumnaRepository> _columnaRepositoryMock;
     private readonly Mock<ITareaRepository> _tareaRepositoryMock;
+    private readonly Mock<IBoardNotifier> _boardNotifierMock;
     private readonly ColumnaService _columnaService;
 
     public ColumnaServiceTests()
     {
         _columnaRepositoryMock = new Mock<IColumnaRepository>();
         _tareaRepositoryMock = new Mock<ITareaRepository>();
-        _columnaService = new ColumnaService(_columnaRepositoryMock.Object, _tareaRepositoryMock.Object);
+        _boardNotifierMock = new Mock<IBoardNotifier>();
+        _columnaService = new ColumnaService(_columnaRepositoryMock.Object, _tareaRepositoryMock.Object, _boardNotifierMock.Object);
     }
 
     [Fact]

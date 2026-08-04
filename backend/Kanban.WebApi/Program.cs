@@ -1,7 +1,5 @@
-using Kanban.Infrastructure.Data;
 using Kanban.Infrastructure;
 using Kanban.Application;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -74,23 +72,16 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-// Configurar DbContext
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-
 // Inyectar Dependencias de Capas
-builder.Services.AddInfrastructure();
+builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddSignalR(); // AÑADIDO PARA SIGNALR
+builder.Services.AddScoped<Kanban.Application.Services.Interfaces.IBoardNotifier, Kanban.WebApi.Adapters.SignalRBoardNotifier>();
 
 var app = builder.Build();
 
-// Ejecutar migraciones automáticamente al arrancar
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-}
+// Ejecutar migraciones automáticamente al arrancar mediante el adaptador de infraestructura
+app.Services.ApplyInfrastructureMigrations();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

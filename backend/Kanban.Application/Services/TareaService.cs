@@ -8,10 +8,17 @@ namespace Kanban.Application.Services;
 public class TareaService : ITareaService
 {
     private readonly ITareaRepository _tareaRepository;
+    private readonly IColumnaRepository _columnaRepository;
+    private readonly IBoardNotifier _boardNotifier;
 
-    public TareaService(ITareaRepository tareaRepository)
+    public TareaService(
+        ITareaRepository tareaRepository,
+        IColumnaRepository columnaRepository,
+        IBoardNotifier boardNotifier)
     {
         _tareaRepository = tareaRepository;
+        _columnaRepository = columnaRepository;
+        _boardNotifier = boardNotifier;
     }
 
     public async Task<IEnumerable<TareaResponseDto>> GetByColumnaIdAsync(int columnaId)
@@ -48,6 +55,12 @@ public class TareaService : ITareaService
 
         await _tareaRepository.AddAsync(tarea);
 
+        var columna = await _columnaRepository.GetByIdAsync(dto.ColumnaId);
+        if (columna != null)
+        {
+            await _boardNotifier.NotifyBoardUpdatedAsync(columna.ProyectoId);
+        }
+
         return new TareaResponseDto
         {
             Id = tarea.Id,
@@ -70,9 +83,15 @@ public class TareaService : ITareaService
         tarea.Descripcion = dto.Descripcion;
         tarea.Prioridad = dto.Prioridad;
         tarea.ResponsableId = dto.ResponsableId;
-        // ColumnaId y Orden se manejan con MoverTareaAsync
 
         await _tareaRepository.UpdateAsync(tarea);
+
+        var columna = await _columnaRepository.GetByIdAsync(tarea.ColumnaId);
+        if (columna != null)
+        {
+            await _boardNotifier.NotifyBoardUpdatedAsync(columna.ProyectoId);
+        }
+
         return true;
     }
 
@@ -81,7 +100,15 @@ public class TareaService : ITareaService
         var tarea = await _tareaRepository.GetByIdAsync(id);
         if (tarea == null) return false;
 
+        var columnaId = tarea.ColumnaId;
         await _tareaRepository.DeleteAsync(tarea);
+
+        var columna = await _columnaRepository.GetByIdAsync(columnaId);
+        if (columna != null)
+        {
+            await _boardNotifier.NotifyBoardUpdatedAsync(columna.ProyectoId);
+        }
+
         return true;
     }
 
@@ -94,6 +121,13 @@ public class TareaService : ITareaService
         tarea.Orden = dto.NuevoOrden;
 
         await _tareaRepository.UpdateAsync(tarea);
+
+        var columna = await _columnaRepository.GetByIdAsync(dto.NuevaColumnaId);
+        if (columna != null)
+        {
+            await _boardNotifier.NotifyBoardUpdatedAsync(columna.ProyectoId);
+        }
+
         return true;
     }
 

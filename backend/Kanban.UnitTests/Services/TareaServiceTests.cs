@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Kanban.Application.DTOs;
 using Kanban.Application.Services;
+using Kanban.Application.Services.Interfaces;
 using Kanban.Domain.Entities;
 using Kanban.Domain.Interfaces;
 using Moq;
@@ -11,12 +12,16 @@ namespace Kanban.UnitTests.Services;
 public class TareaServiceTests
 {
     private readonly Mock<ITareaRepository> _tareaRepositoryMock;
+    private readonly Mock<IColumnaRepository> _columnaRepositoryMock;
+    private readonly Mock<IBoardNotifier> _boardNotifierMock;
     private readonly TareaService _tareaService;
 
     public TareaServiceTests()
     {
         _tareaRepositoryMock = new Mock<ITareaRepository>();
-        _tareaService = new TareaService(_tareaRepositoryMock.Object);
+        _columnaRepositoryMock = new Mock<IColumnaRepository>();
+        _boardNotifierMock = new Mock<IBoardNotifier>();
+        _tareaService = new TareaService(_tareaRepositoryMock.Object, _columnaRepositoryMock.Object, _boardNotifierMock.Object);
     }
 
     [Fact]

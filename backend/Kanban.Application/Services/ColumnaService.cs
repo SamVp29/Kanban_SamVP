@@ -9,11 +9,16 @@ public class ColumnaService : IColumnaService
 {
     private readonly IColumnaRepository _columnaRepository;
     private readonly ITareaRepository _tareaRepository;
+    private readonly IBoardNotifier _boardNotifier;
 
-    public ColumnaService(IColumnaRepository columnaRepository, ITareaRepository tareaRepository)
+    public ColumnaService(
+        IColumnaRepository columnaRepository,
+        ITareaRepository tareaRepository,
+        IBoardNotifier boardNotifier)
     {
         _columnaRepository = columnaRepository;
         _tareaRepository = tareaRepository;
+        _boardNotifier = boardNotifier;
     }
 
     public async Task<IEnumerable<ColumnaResponseDto>> GetByProyectoIdAsync(int proyectoId)
@@ -41,6 +46,7 @@ public class ColumnaService : IColumnaService
         };
 
         await _columnaRepository.AddAsync(columna);
+        await _boardNotifier.NotifyBoardUpdatedAsync(dto.ProyectoId);
 
         return new ColumnaResponseDto
         {
@@ -58,6 +64,7 @@ public class ColumnaService : IColumnaService
 
         columna.Nombre = nuevoNombre;
         await _columnaRepository.UpdateAsync(columna);
+        await _boardNotifier.NotifyBoardUpdatedAsync(columna.ProyectoId);
         return true;
     }
 
@@ -73,7 +80,9 @@ public class ColumnaService : IColumnaService
             throw new InvalidOperationException("No se puede eliminar una columna que contiene tareas.");
         }
 
+        var proyectoId = columna.ProyectoId;
         await _columnaRepository.DeleteAsync(columna);
+        await _boardNotifier.NotifyBoardUpdatedAsync(proyectoId);
         return true;
     }
 
@@ -84,6 +93,7 @@ public class ColumnaService : IColumnaService
 
         columna.Orden = nuevoOrden;
         await _columnaRepository.UpdateAsync(columna);
+        await _boardNotifier.NotifyBoardUpdatedAsync(columna.ProyectoId);
         return true;
     }
 

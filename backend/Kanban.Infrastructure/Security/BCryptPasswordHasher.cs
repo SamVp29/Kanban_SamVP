@@ -1,8 +1,8 @@
 using Kanban.Application.Services.Interfaces;
 
-namespace Kanban.Application.Services;
+namespace Kanban.Infrastructure.Security;
 
-public class PasswordHasher : IPasswordHasher
+public class BCryptPasswordHasher : IPasswordHasher
 {
     public string HashPassword(string password)
     {
