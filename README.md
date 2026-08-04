@@ -139,7 +139,9 @@ Para evitar archivos irrelevantes y garantizar la mantenibilidad del código:
 
 ## 📊 5. Diagrama del Modelo de Base de Datos (ER)
 
-![Diagrama ER Modelo de Datos](er-diagram.svg)
+<p align="center">
+  <img src="er-diagram.png" width="100%" alt="Diagrama ER Modelo de Datos" />
+</p>
 
 ---
 
@@ -157,9 +159,8 @@ Para evitar archivos irrelevantes y garantizar la mantenibilidad del código:
 
 ## 🤖 7. Declaración del Uso de Asistentes de Inteligencia Artificial (IA)
 
-En cumplimiento de las reglas de la prueba técnica (Sección 9), se declara el uso responsable y supervisado de **Antigravity AI (Gemini 3.6 Flash / Agentic Assistant)** en las siguientes tareas:
+En cumplimiento de las especificaciones de la prueba técnica (Secciones 8 y 9), se declara el uso transparente y supervisado de **Antigravity AI (Gemini 3.6 Flash)** como herramienta auxiliar de desarrollo en las siguientes áreas:
 
-1. **Estructura Arquitectónica:** Apoyo en el maquetado inicial de la Arquitectura Hexagonal en .NET 8 y la modularización en Angular 17.
-2. **Optimización de Consultas SQL:** Refactorización del servicio de reportes para implementar la consulta única EF Core con `.Include().ThenInclude()` eliminando peticiones N+1.
-3. **Manejo de Errores HTTP:** Implementación del patrón de captura 401 en `AuthInterceptor`.
-4. **Sincronización Tiempo Real:** Configuración de concurrencia (`ConcurrentDictionary`) en SignalR para el conteo de usuarios online.
+1. **Maquetado y Estilos de Interfaz:** Asistencia en la adaptación de plantillas HTML, estilos SCSS y componentes visuales de PrimeNG (Sakai).
+2. **Generación de Código Repetitivo (Boilerplate):** Aceleración en el armado inicial de DTOs de transferencia, enumeraciones y estructuras base.
+3. **Documentación y Guías:** Ayuda en la redacción y formateo Markdown del archivo README y la configuración de Docker Compose.
