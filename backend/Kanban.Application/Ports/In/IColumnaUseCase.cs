@@ -1,8 +1,8 @@
 using Kanban.Application.DTOs;
 
-namespace Kanban.Application.Services.Interfaces;
+namespace Kanban.Application.Ports.In;
 
-public interface IColumnaService
+public interface IColumnaUseCase
 {
     Task<IEnumerable<ColumnaResponseDto>> GetByProyectoIdAsync(int proyectoId);
     Task<ColumnaResponseDto> CreateAsync(ColumnaCreateDto dto);

@@ -1,5 +1,5 @@
 using Kanban.Domain.Entities;
-using Kanban.Domain.Interfaces;
+using Kanban.Domain.Ports.Out;
 using Kanban.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,31 +11,39 @@ public class ProyectoRepository : Repository<Proyecto>, IProyectoRepository
     {
     }
 
-    public async Task<(IEnumerable<Proyecto> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, string? nombreFiltro)
+    public async Task<IEnumerable<Proyecto>> GetPagedAsync(int pageNumber, int pageSize, string? search)
     {
         var query = _dbSet.AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(nombreFiltro))
+        if (!string.IsNullOrWhiteSpace(search))
         {
-            query = query.Where(p => p.Nombre.ToLower().Contains(nombreFiltro.ToLower()));
+            query = query.Where(p => p.Nombre.ToLower().Contains(search.ToLower()));
         }
 
-        int totalCount = await query.CountAsync();
-
-        var items = await query.OrderByDescending(p => p.FechaInicio)
-                               .Skip((page - 1) * pageSize)
-                               .Take(pageSize)
-                               .ToListAsync();
-
-        return (items, totalCount);
+        return await query.OrderByDescending(p => p.FechaInicio)
+                          .Skip((pageNumber - 1) * pageSize)
+                          .Take(pageSize)
+                          .ToListAsync();
     }
 
-    public async Task<Proyecto?> GetProyectoCompletoReporteAsync(int id)
+    public async Task<int> GetTotalCountAsync(string? search)
+    {
+        var query = _dbSet.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(p => p.Nombre.ToLower().Contains(search.ToLower()));
+        }
+
+        return await query.CountAsync();
+    }
+
+    public async Task<Proyecto?> GetProyectoCompletoReporteAsync(int proyectoId)
     {
         return await _dbSet
             .Include(p => p.Columnas)
                 .ThenInclude(c => c.Tareas)
                     .ThenInclude(t => t.Responsable)
-            .FirstOrDefaultAsync(p => p.Id == id);
+            .FirstOrDefaultAsync(p => p.Id == proyectoId);
     }
 }

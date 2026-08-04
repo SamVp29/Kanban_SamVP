@@ -1,5 +1,5 @@
 using Kanban.Application.DTOs;
-using Kanban.Application.Services.Interfaces;
+using Kanban.Application.Ports.In;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,24 +10,24 @@ namespace Kanban.WebApi.Controllers;
 [Route("api/[controller]")]
 public class ProyectosController : ControllerBase
 {
-    private readonly IProyectoService _proyectoService;
+    private readonly IProyectoUseCase _proyectoUseCase;
 
-    public ProyectosController(IProyectoService proyectoService)
+    public ProyectosController(IProyectoUseCase proyectoUseCase)
     {
-        _proyectoService = proyectoService;
+        _proyectoUseCase = proyectoUseCase;
     }
 
     [HttpGet]
     public async Task<ActionResult<PagedResponseDto<ProyectoResponseDto>>> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? filtro = null)
     {
-        var proyectos = await _proyectoService.GetPagedAsync(page, pageSize, filtro);
+        var proyectos = await _proyectoUseCase.GetPagedAsync(page, pageSize, filtro);
         return Ok(proyectos);
     }
 
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetById(int id)
     {
-        var proyecto = await _proyectoService.GetByIdAsync(id);
+        var proyecto = await _proyectoUseCase.GetByIdAsync(id);
         if (proyecto == null) return NotFound();
         return Ok(proyecto);
     }
@@ -35,14 +35,14 @@ public class ProyectosController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ProyectoResponseDto>> Create(ProyectoCreateDto dto)
     {
-        var proyecto = await _proyectoService.CreateAsync(dto);
+        var proyecto = await _proyectoUseCase.CreateAsync(dto);
         return CreatedAtAction(nameof(GetById), new { id = proyecto.Id }, proyecto);
     }
 
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(int id, ProyectoCreateDto dto)
     {
-        var success = await _proyectoService.UpdateAsync(id, dto);
+        var success = await _proyectoUseCase.UpdateAsync(id, dto);
         if (!success) return NotFound();
         return NoContent();
     }
@@ -50,7 +50,7 @@ public class ProyectosController : ControllerBase
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var success = await _proyectoService.DeleteAsync(id);
+        var success = await _proyectoUseCase.DeleteAsync(id);
         if (!success) return NotFound();
         return NoContent();
     }

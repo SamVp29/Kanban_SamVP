@@ -76,7 +76,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 builder.Services.AddSignalR(); // AÑADIDO PARA SIGNALR
-builder.Services.AddScoped<Kanban.Application.Services.Interfaces.IBoardNotifier, Kanban.WebApi.Adapters.SignalRBoardNotifier>();
+builder.Services.AddScoped<Kanban.Domain.Ports.Out.IBoardNotifier, Kanban.WebApi.Adapters.SignalRBoardNotifier>();
 
 var app = builder.Build();
 

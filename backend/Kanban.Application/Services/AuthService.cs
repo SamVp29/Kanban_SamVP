@@ -1,10 +1,10 @@
 using Kanban.Application.DTOs;
-using Kanban.Application.Services.Interfaces;
-using Kanban.Domain.Interfaces;
+using Kanban.Application.Ports.In;
+using Kanban.Domain.Ports.Out;
 
 namespace Kanban.Application.Services;
 
-public class AuthService : IAuthService
+public class AuthService : IAuthUseCase
 {
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IPasswordHasher _passwordHasher;

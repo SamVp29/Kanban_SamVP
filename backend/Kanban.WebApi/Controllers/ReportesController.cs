@@ -1,4 +1,4 @@
-using Kanban.Application.Reports;
+using Kanban.Application.Ports.In;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,11 +9,11 @@ namespace Kanban.WebApi.Controllers;
 [Route("api/[controller]")]
 public class ReportesController : ControllerBase
 {
-    private readonly IReportService _reportService;
+    private readonly IReportUseCase _reportUseCase;
 
-    public ReportesController(IReportService reportService)
+    public ReportesController(IReportUseCase reportUseCase)
     {
-        _reportService = reportService;
+        _reportUseCase = reportUseCase;
     }
 
     [HttpGet("{proyectoId:int}")]
@@ -26,7 +26,7 @@ public class ReportesController : ControllerBase
     {
         try
         {
-            var content = await _reportService.GenerateReportAsync(proyectoId, format, prioridad, responsableId, texto);
+            var content = await _reportUseCase.GenerateReportAsync(proyectoId, format, prioridad, responsableId, texto);
             
             if (format.ToLower() == "pdf")
             {

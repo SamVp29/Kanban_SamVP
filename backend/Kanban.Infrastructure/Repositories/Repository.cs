@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using Kanban.Domain.Interfaces;
+using Kanban.Domain.Ports.Out;
 using Kanban.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 

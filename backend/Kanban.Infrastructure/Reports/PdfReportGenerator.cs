@@ -1,5 +1,5 @@
-using Kanban.Application.DTOs;
-using Kanban.Application.Reports;
+using Kanban.Domain.Models;
+using Kanban.Domain.Ports.Out;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -10,7 +10,7 @@ public class PdfReportGenerator : IReportGenerator
 {
     public string Format => "pdf";
 
-    public byte[] Generate(ProyectoReportDto data)
+    public byte[] Generate(ProyectoReportData data)
     {
         QuestPDF.Settings.License = LicenseType.Community;
 
@@ -32,7 +32,7 @@ public class PdfReportGenerator : IReportGenerator
         return document.GeneratePdf();
     }
 
-    private void ComposeHeader(IContainer container, ProyectoReportDto data)
+    private void ComposeHeader(IContainer container, ProyectoReportData data)
     {
         container.Row(row =>
         {
@@ -45,7 +45,7 @@ public class PdfReportGenerator : IReportGenerator
         });
     }
 
-    private void ComposeContent(IContainer container, ProyectoReportDto data)
+    private void ComposeContent(IContainer container, ProyectoReportData data)
     {
         container.PaddingVertical(1, Unit.Centimetre).Column(column =>
         {

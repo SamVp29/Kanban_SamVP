@@ -1,9 +1,8 @@
 using FluentAssertions;
 using Kanban.Application.DTOs;
 using Kanban.Application.Services;
-using Kanban.Application.Services.Interfaces;
 using Kanban.Domain.Entities;
-using Kanban.Domain.Interfaces;
+using Kanban.Domain.Ports.Out;
 using Moq;
 using Xunit;
 
@@ -27,7 +26,6 @@ public class TareaServiceTests
     [Fact]
     public async Task CreateAsync_DebeCalcularNuevaPosicionLexicografica_CuandoSeAgregaUnaTarea()
     {
-        // Arrange (Obligatorio PDF 6.9: Pruebas sobre cálculo de la nueva posición al reordenar)
         int columnaId = 1;
         var tareasExistentes = new List<Tarea>
         {
@@ -51,14 +49,11 @@ public class TareaServiceTests
             ColumnaId = columnaId
         };
 
-        // Act
         var result = await _tareaService.CreateAsync(dto);
 
-        // Assert
         result.Should().NotBeNull();
         tareaInsertada.Should().NotBeNull();
         
-        // La nueva posición debe ser maxOrden + 65536 = 131072 + 65536 = 196608
         double ordenEsperado = 131072 + 65536;
         tareaInsertada!.Orden.Should().Be(ordenEsperado);
         result.Orden.Should().Be(ordenEsperado);
@@ -67,7 +62,6 @@ public class TareaServiceTests
     [Fact]
     public async Task UpdateColumnAsync_DebeActualizarColumnaYOrden_Correctamente()
     {
-        // Arrange
         int tareaId = 5;
         int nuevaColumnaId = 2;
         double nuevoOrden = 98304.5;
@@ -93,10 +87,8 @@ public class TareaServiceTests
             NuevoOrden = nuevoOrden
         };
 
-        // Act
         var result = await _tareaService.MoverTareaAsync(dto);
 
-        // Assert
         result.Should().BeTrue();
         tareaExistente.ColumnaId.Should().Be(nuevaColumnaId);
         tareaExistente.Orden.Should().Be(nuevoOrden);

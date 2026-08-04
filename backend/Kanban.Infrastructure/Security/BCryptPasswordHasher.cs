@@ -1,4 +1,4 @@
-using Kanban.Application.Services.Interfaces;
+using Kanban.Domain.Ports.Out;
 
 namespace Kanban.Infrastructure.Security;
 

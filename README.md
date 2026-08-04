@@ -90,10 +90,10 @@ El backend implementa **Arquitectura Hexagonal (Ports & Adapters)** en .NET 8, d
 ```text
 Kanban_SamVP/
 ├── backend/
-│   ├── Kanban.Domain/          # Núcleo de Dominio (Entidades puras, Interfaces Puertos de Repositorio)
-│   ├── Kanban.Application/     # Casos de Uso y Puertos de Salida (DTOs, IPasswordHasher, IJwtTokenGenerator, IBoardNotifier)
-│   ├── Kanban.Infrastructure/  # Adaptadores Secundarios (EF Core, PostgreSQL, BCrypt, JwtTokenGenerator, QuestPDF, EPPlus)
-│   ├── Kanban.WebApi/          # Adaptadores Primarios (Controllers REST HTTP, SignalR Hubs, Adaptador IBoardNotifier)
+│   ├── Kanban.Domain/          # Core de Dominio (Entidades Ricas, Modelos de Dominio, Ports/Out) - 0 DTOs
+│   ├── Kanban.Application/     # Casos de Uso (DTOs de transporte, Ports/In e Implementación de Casos de Uso)
+│   ├── Kanban.Infrastructure/  # Adaptadores Secundarios (EF Core, PostgreSQL, BCrypt, Jwt, QuestPDF, EPPlus) - 0 ref a Application
+│   ├── Kanban.WebApi/          # Adaptadores Primarios (Controladores HTTP que consumen Ports/In, Hubs SignalR)
 │   └── Kanban.UnitTests/       # Pruebas Automatizadas Backend (xUnit, Moq, FluentAssertions)
 │
 ├── frontend/src/
@@ -111,11 +111,24 @@ Kanban_SamVP/
 └── README.md
 ```
 
-### Justificación de las Capas Hexagonales
-1. **`Kanban.Domain` (Core Puro):** Entidades C# puras y Puertos de salida de persistencia (`IProyectoRepository`, `ITareaRepository`, `IColumnaRepository`, `IUsuarioRepository`). **0 dependencias externas**.
-2. **`Kanban.Application` (Casos de Uso & Puertos):** Define las reglas de negocio, DTOs de transferencia y **Puertos de Salida** para infraestructura (`IPasswordHasher`, `IJwtTokenGenerator`, `IBoardNotifier`, `IReportGenerator`). **0 dependencias a EF Core, BCrypt, JWT o SignalR**.
-3. **`Kanban.Infrastructure` (Adaptadores Secundarios):** Implementaciones concretas de la infraestructura (`BCryptPasswordHasher`, `JwtTokenGenerator`, `PdfReportGenerator`, `ExcelReportGenerator`, `ApplicationDbContext`). Centraliza el registro de DI y la ejecución de migraciones de base de datos.
-4. **`Kanban.WebApi` (Adaptadores Primarios):** Controladores REST HTTP y Hubs de SignalR. Los controladores son adaptadores HTTP puros que no conocen SignalR ni EF Core.
+### Justificación de las Capas Hexagonales (Ports & Adapters)
+1. **`Kanban.Domain` (Core Puro & Contrato de Puertos de Salida):**
+   - Contiene el Modelo de Dominio Rico (**Rich Domain Model**) con métodos de comportamiento (`Mover`, `CambiarNombre`, `Reordenar`, `ActualizarDetalles`).
+   - Define los **Puertos de Salida (`Ports/Out`)**: Repositorios (`ITareaRepository`, `IColumnaRepository`, etc.) y Servicios de Infraestructura (`IPasswordHasher`, `IJwtTokenGenerator`, `IBoardNotifier`, `IReportGenerator`).
+   - **0 DTOs de transferencia y 0 dependencias a librerías externas o frameworks**. `Domain` opera estrictamente con Entidades del Dominio y tipos primitivos.
+
+2. **`Kanban.Application` (Casos de Uso, DTOs & Puertos de Entrada):**
+   - Define los **DTOs de transferencia** (`LoginRequestDto`, `AuthResponseDto`, `TareaCreateDto`, `ProyectoResponseDto`, etc.) y los **Puertos de Entrada (`Ports/In`)** (`ITareaUseCase`, `IColumnaUseCase`, `IProyectoUseCase`, `IAuthUseCase`, `IReportUseCase`).
+   - Implementa los Puertos de Entrada coordinando las Entidades de Dominio y llamando a los Puertos de Salida (`Ports/Out`).
+   - Depende **únicamente de `Kanban.Domain`**. **0 dependencias a EF Core, BCrypt, JWT, SignalR ni `Kanban.Infrastructure`**.
+
+3. **`Kanban.Infrastructure` (Adaptadores Secundarios):**
+   - Implementaciones concretas de los Puertos de Salida (`BCryptPasswordHasher`, `JwtTokenGenerator`, `PdfReportGenerator`, `ExcelReportGenerator`, `ApplicationDbContext`).
+   - **0 dependencia a `Kanban.Application`**: La referencia de proyecto se ha eliminado por completo (`Infrastructure` sólo conoce a `Domain`).
+
+4. **`Kanban.WebApi` (Adaptadores Primarios & Punto de Composición):**
+   - Controladores REST HTTP que consumen los Puertos de Entrada (`Ports/In`) usando los DTOs de Aplicación y el Adaptador de Notificaciones Real-Time (`SignalRBoardNotifier`).
+   - `Program.cs` actúa como el Composition Root (Punto de Composición) que resuelve y registra la inyección de dependencias de la solución.
 
 ---
 

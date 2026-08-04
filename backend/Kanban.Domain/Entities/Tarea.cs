@@ -15,4 +15,19 @@ public class Tarea
 
     public double Orden { get; set; } // Lexicographical ordering / rank
     public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
+
+    // Reglas y comportamientos del Dominio
+    public void Mover(int nuevaColumnaId, double nuevoOrden)
+    {
+        ColumnaId = nuevaColumnaId;
+        Orden = nuevoOrden;
+    }
+
+    public void ActualizarDetalles(string titulo, string descripcion, string prioridad, int? responsableId)
+    {
+        Titulo = titulo;
+        Descripcion = descripcion;
+        Prioridad = prioridad;
+        ResponsableId = responsableId;
+    }
 }

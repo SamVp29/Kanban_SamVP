@@ -1,11 +1,11 @@
 using Kanban.Application.DTOs;
-using Kanban.Application.Services.Interfaces;
+using Kanban.Application.Ports.In;
 using Kanban.Domain.Entities;
-using Kanban.Domain.Interfaces;
+using Kanban.Domain.Ports.Out;
 
 namespace Kanban.Application.Services;
 
-public class ColumnaService : IColumnaService
+public class ColumnaService : IColumnaUseCase
 {
     private readonly IColumnaRepository _columnaRepository;
     private readonly ITareaRepository _tareaRepository;
@@ -62,7 +62,9 @@ public class ColumnaService : IColumnaService
         var columna = await _columnaRepository.GetByIdAsync(id);
         if (columna == null) return false;
 
-        columna.Nombre = nuevoNombre;
+        // Comportamiento de dominio rico (Rich Domain Model)
+        columna.CambiarNombre(nuevoNombre);
+
         await _columnaRepository.UpdateAsync(columna);
         await _boardNotifier.NotifyBoardUpdatedAsync(columna.ProyectoId);
         return true;
@@ -91,7 +93,9 @@ public class ColumnaService : IColumnaService
         var columna = await _columnaRepository.GetByIdAsync(columnaId);
         if (columna == null) return false;
 
-        columna.Orden = nuevoOrden;
+        // Comportamiento de dominio rico (Rich Domain Model)
+        columna.Reordenar(nuevoOrden);
+
         await _columnaRepository.UpdateAsync(columna);
         await _boardNotifier.NotifyBoardUpdatedAsync(columna.ProyectoId);
         return true;

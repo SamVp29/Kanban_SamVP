@@ -1,6 +1,6 @@
 using Kanban.Domain.Entities;
 
-namespace Kanban.Domain.Interfaces;
+namespace Kanban.Domain.Ports.Out;
 
 public interface IUsuarioRepository : IRepository<Usuario>
 {

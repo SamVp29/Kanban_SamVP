@@ -1,7 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Kanban.Application.Services.Interfaces;
+using Kanban.Domain.Ports.Out;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 

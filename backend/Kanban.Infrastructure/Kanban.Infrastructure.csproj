@@ -2,7 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Kanban.Domain\Kanban.Domain.csproj" />
-    <ProjectReference Include="..\Kanban.Application\Kanban.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

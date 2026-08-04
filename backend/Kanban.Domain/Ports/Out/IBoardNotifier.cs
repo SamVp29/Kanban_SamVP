@@ -1,4 +1,4 @@
-namespace Kanban.Application.Services.Interfaces;
+namespace Kanban.Domain.Ports.Out;
 
 public interface IBoardNotifier
 {

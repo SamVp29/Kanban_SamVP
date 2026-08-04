@@ -1,7 +1,7 @@
 using FluentAssertions;
 using Kanban.Application.Services;
 using Kanban.Domain.Entities;
-using Kanban.Domain.Interfaces;
+using Kanban.Domain.Ports.Out;
 using Moq;
 using Xunit;
 
@@ -21,7 +21,6 @@ public class ProyectoServiceTests
     [Fact]
     public async Task GetPagedAsync_DebeRetornarPaginaYTotalCount()
     {
-        // Arrange
         int page = 1;
         int pageSize = 5;
         string filtro = "Agile";
@@ -33,12 +32,13 @@ public class ProyectoServiceTests
         };
 
         _proyectoRepositoryMock.Setup(r => r.GetPagedAsync(page, pageSize, filtro))
-            .ReturnsAsync((listaProyectos, 2));
+            .ReturnsAsync(listaProyectos);
 
-        // Act
+        _proyectoRepositoryMock.Setup(r => r.GetTotalCountAsync(filtro))
+            .ReturnsAsync(2);
+
         var result = await _proyectoService.GetPagedAsync(page, pageSize, filtro);
 
-        // Assert
         result.Should().NotBeNull();
         result.TotalCount.Should().Be(2);
         result.Items.Should().HaveCount(2);

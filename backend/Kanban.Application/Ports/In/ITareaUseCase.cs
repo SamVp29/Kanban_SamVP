@@ -1,8 +1,8 @@
 using Kanban.Application.DTOs;
 
-namespace Kanban.Application.Services.Interfaces;
+namespace Kanban.Application.Ports.In;
 
-public interface ITareaService
+public interface ITareaUseCase
 {
     Task<IEnumerable<TareaResponseDto>> GetByColumnaIdAsync(int columnaId);
     Task<TareaResponseDto> CreateAsync(TareaCreateDto dto);

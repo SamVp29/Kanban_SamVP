@@ -1,9 +1,10 @@
-using Kanban.Application.DTOs;
-using Kanban.Domain.Interfaces;
+using Kanban.Application.Ports.In;
+using Kanban.Domain.Models;
+using Kanban.Domain.Ports.Out;
 
 namespace Kanban.Application.Reports;
 
-public class ReportService : IReportService
+public class ReportService : IReportUseCase
 {
     private readonly IEnumerable<IReportGenerator> _generators;
     private readonly IProyectoRepository _proyectoRepository;
@@ -28,18 +29,18 @@ public class ReportService : IReportService
         return generator.Generate(data);
     }
 
-    private async Task<ProyectoReportDto> BuildReportDataAsync(int proyectoId, string? prioridad, int? responsableId, string? texto)
+    private async Task<ProyectoReportData> BuildReportDataAsync(int proyectoId, string? prioridad, int? responsableId, string? texto)
     {
         var proyecto = await _proyectoRepository.GetProyectoCompletoReporteAsync(proyectoId);
         if (proyecto == null) throw new KeyNotFoundException("Proyecto no encontrado");
 
-        var reportData = new ProyectoReportDto
+        var reportData = new ProyectoReportData
         {
             ProyectoId = proyecto.Id,
             NombreProyecto = proyecto.Nombre,
             DescripcionProyecto = proyecto.Descripcion,
             FechaCreacion = proyecto.FechaInicio,
-            Columnas = new List<ColumnaReportDto>()
+            Columnas = new List<ColumnaReportData>()
         };
 
         foreach (var col in proyecto.Columnas.OrderBy(c => c.Orden))
@@ -63,10 +64,10 @@ public class ReportService : IReportService
                     t.Descripcion.ToLower().Contains(texto.ToLower()));
             }
 
-            var colDto = new ColumnaReportDto
+            var colDto = new ColumnaReportData
             {
                 NombreColumna = col.Nombre,
-                Tareas = tareasQuery.OrderBy(t => t.Orden).Select(t => new TareaReportDto
+                Tareas = tareasQuery.OrderBy(t => t.Orden).Select(t => new TareaReportData
                 {
                     Titulo = t.Titulo,
                     Descripcion = t.Descripcion,

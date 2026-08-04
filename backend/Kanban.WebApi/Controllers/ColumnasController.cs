@@ -1,5 +1,5 @@
 using Kanban.Application.DTOs;
-using Kanban.Application.Services.Interfaces;
+using Kanban.Application.Ports.In;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,31 +10,31 @@ namespace Kanban.WebApi.Controllers;
 [Route("api/[controller]")]
 public class ColumnasController : ControllerBase
 {
-    private readonly IColumnaService _columnaService;
+    private readonly IColumnaUseCase _columnaUseCase;
 
-    public ColumnasController(IColumnaService columnaService)
+    public ColumnasController(IColumnaUseCase columnaUseCase)
     {
-        _columnaService = columnaService;
+        _columnaUseCase = columnaUseCase;
     }
 
     [HttpGet("proyecto/{proyectoId:int}")]
     public async Task<ActionResult<IEnumerable<ColumnaResponseDto>>> GetByProyecto(int proyectoId)
     {
-        var columnas = await _columnaService.GetByProyectoIdAsync(proyectoId);
+        var columnas = await _columnaUseCase.GetByProyectoIdAsync(proyectoId);
         return Ok(columnas);
     }
 
     [HttpPost]
     public async Task<ActionResult<ColumnaResponseDto>> Create(ColumnaCreateDto dto)
     {
-        var columna = await _columnaService.CreateAsync(dto);
+        var columna = await _columnaUseCase.CreateAsync(dto);
         return Created("", columna);
     }
 
     [HttpPut("{id:int}")]
     public async Task<ActionResult> Update(int id, [FromBody] string nuevoNombre)
     {
-        var success = await _columnaService.UpdateAsync(id, nuevoNombre);
+        var success = await _columnaUseCase.UpdateAsync(id, nuevoNombre);
         if (!success) return NotFound();
         return NoContent();
     }
@@ -42,7 +42,7 @@ public class ColumnasController : ControllerBase
     [HttpPut("mover")]
     public async Task<ActionResult> Mover([FromBody] ColumnaMoverDto dto)
     {
-        var success = await _columnaService.ReordenarColumnaAsync(dto.ColumnaId, dto.NuevoOrden);
+        var success = await _columnaUseCase.ReordenarColumnaAsync(dto.ColumnaId, dto.NuevoOrden);
         if (!success) return NotFound();
         return NoContent();
     }
@@ -52,7 +52,7 @@ public class ColumnasController : ControllerBase
     {
         try
         {
-            var success = await _columnaService.DeleteAsync(id);
+            var success = await _columnaUseCase.DeleteAsync(id);
             if (!success) return NotFound();
             return NoContent();
         }

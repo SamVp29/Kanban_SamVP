@@ -1,11 +1,11 @@
 using Kanban.Application.DTOs;
-using Kanban.Application.Services.Interfaces;
+using Kanban.Application.Ports.In;
 using Kanban.Domain.Entities;
-using Kanban.Domain.Interfaces;
+using Kanban.Domain.Ports.Out;
 
 namespace Kanban.Application.Services;
 
-public class TareaService : ITareaService
+public class TareaService : ITareaUseCase
 {
     private readonly ITareaRepository _tareaRepository;
     private readonly IColumnaRepository _columnaRepository;
@@ -79,10 +79,8 @@ public class TareaService : ITareaService
         var tarea = await _tareaRepository.GetByIdAsync(id);
         if (tarea == null) return false;
 
-        tarea.Titulo = dto.Titulo;
-        tarea.Descripcion = dto.Descripcion;
-        tarea.Prioridad = dto.Prioridad;
-        tarea.ResponsableId = dto.ResponsableId;
+        // Comportamiento de dominio rico (Rich Domain Model)
+        tarea.ActualizarDetalles(dto.Titulo, dto.Descripcion, dto.Prioridad, dto.ResponsableId);
 
         await _tareaRepository.UpdateAsync(tarea);
 
@@ -117,8 +115,8 @@ public class TareaService : ITareaService
         var tarea = await _tareaRepository.GetByIdAsync(dto.TareaId);
         if (tarea == null) return false;
 
-        tarea.ColumnaId = dto.NuevaColumnaId;
-        tarea.Orden = dto.NuevoOrden;
+        // Comportamiento de dominio rico (Rich Domain Model)
+        tarea.Mover(dto.NuevaColumnaId, dto.NuevoOrden);
 
         await _tareaRepository.UpdateAsync(tarea);
 

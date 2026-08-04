@@ -1,6 +1,8 @@
-using Kanban.Domain.Interfaces;
+using Kanban.Domain.Ports.Out;
 using Kanban.Infrastructure.Data;
+using Kanban.Infrastructure.Reports;
 using Kanban.Infrastructure.Repositories;
+using Kanban.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -20,11 +22,11 @@ public static class DependencyInjection
         services.AddScoped<IColumnaRepository, ColumnaRepository>();
         services.AddScoped<ITareaRepository, TareaRepository>();
 
-        services.AddScoped<Kanban.Application.Reports.IReportGenerator, Kanban.Infrastructure.Reports.PdfReportGenerator>();
-        services.AddScoped<Kanban.Application.Reports.IReportGenerator, Kanban.Infrastructure.Reports.ExcelReportGenerator>();
+        services.AddScoped<IReportGenerator, PdfReportGenerator>();
+        services.AddScoped<IReportGenerator, ExcelReportGenerator>();
 
-        services.AddScoped<Kanban.Application.Services.Interfaces.IPasswordHasher, Kanban.Infrastructure.Security.BCryptPasswordHasher>();
-        services.AddScoped<Kanban.Application.Services.Interfaces.IJwtTokenGenerator, Kanban.Infrastructure.Security.JwtTokenGenerator>();
+        services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
         return services;
     }

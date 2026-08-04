@@ -1,11 +1,11 @@
 using Kanban.Application.DTOs;
-using Kanban.Application.Services.Interfaces;
+using Kanban.Application.Ports.In;
 using Kanban.Domain.Entities;
-using Kanban.Domain.Interfaces;
+using Kanban.Domain.Ports.Out;
 
 namespace Kanban.Application.Services;
 
-public class ProyectoService : IProyectoService
+public class ProyectoService : IProyectoUseCase
 {
     private readonly IProyectoRepository _proyectoRepository;
 
@@ -16,9 +16,10 @@ public class ProyectoService : IProyectoService
 
     public async Task<PagedResponseDto<ProyectoResponseDto>> GetPagedAsync(int page, int pageSize, string? nombreFiltro)
     {
-        var result = await _proyectoRepository.GetPagedAsync(page, pageSize, nombreFiltro);
-        
-        var dtoList = result.Items.Select(p => new ProyectoResponseDto
+        var items = await _proyectoRepository.GetPagedAsync(page, pageSize, nombreFiltro);
+        var totalCount = await _proyectoRepository.GetTotalCountAsync(nombreFiltro);
+
+        var dtoList = items.Select(p => new ProyectoResponseDto
         {
             Id = p.Id,
             Nombre = p.Nombre,
@@ -31,7 +32,7 @@ public class ProyectoService : IProyectoService
         return new PagedResponseDto<ProyectoResponseDto>
         {
             Items = dtoList,
-            TotalCount = result.TotalCount,
+            TotalCount = totalCount,
             Page = page,
             PageSize = pageSize
         };

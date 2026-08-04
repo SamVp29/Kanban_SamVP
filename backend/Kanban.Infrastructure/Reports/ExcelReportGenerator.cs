@@ -1,8 +1,8 @@
-using Kanban.Application.DTOs;
-using Kanban.Application.Reports;
+using System.Drawing;
+using Kanban.Domain.Models;
+using Kanban.Domain.Ports.Out;
 using OfficeOpenXml;
 using OfficeOpenXml.Style;
-using System.Drawing;
 
 namespace Kanban.Infrastructure.Reports;
 
@@ -10,7 +10,7 @@ public class ExcelReportGenerator : IReportGenerator
 {
     public string Format => "excel";
 
-    public byte[] Generate(ProyectoReportDto data)
+    public byte[] Generate(ProyectoReportData data)
     {
         ExcelPackage.License.SetNonCommercialPersonal("Developer");
 
