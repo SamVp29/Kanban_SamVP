@@ -1,148 +1,165 @@
 # Kanban Agile Project Management
 
-Plataforma de gestión de proyectos ágiles basada en tableros Kanban, desarrollada para evaluación técnica. Permite crear proyectos, configurar columnas y administrar tareas en tiempo real.
+Plataforma web de gestión de proyectos ágiles basada en tableros Kanban interactivos.
+
+Permite administrar proyectos, personalizar flujos de trabajo mediante columnas dinámicas y gestionar tareas en tiempo real mediante arrastre y soltar (Drag & Drop), con exportación dual de reportes (PDF y Excel) alimentados por una única consulta a la base de datos.
 
 ---
 
-## 1. Requisitos Previos
+## 🚀 1. Requisitos Previos e Instalación
 
-Dependiendo del método de ejecución elegido, necesitarás:
+### Opción A: Despliegue Automatizado con Docker (Recomendado)
 
-- **Docker y Docker Compose** (Opción recomendada).
-- **.NET 8 SDK** (Si se ejecuta localmente).
-- **Node.js v20+** y **Angular CLI 17** (Si se ejecuta localmente).
-- **PostgreSQL 15+** (Si se ejecuta localmente).
+El proyecto está 100% contenedorizado con **Docker** y **Docker Compose** para garantizar un entorno reproducible e independiente de SDKs locales.
 
-## 2. Ejecución (Docker)
+1. Clonar el repositorio:
+   ```bash
+   git clone https://github.com/tu-usuario/Kanban_SamVP.git
+   cd Kanban_SamVP
+   ```
+2. Asegurar que el archivo `.env` existe en la raíz (puedes duplicar `.env.example`):
+   ```bash
+   cp .env.example .env
+   ```
+3. Ejecutar los servicios en segundo plano:
+   ```bash
+   docker-compose up -d --build
+   ```
 
-Para garantizar un entorno limpio, profesional y reproducible, la aplicación se despliega utilizando **Docker Compose**. Esto evita conflictos de dependencias, SDKs o versiones locales en la máquina evaluadora.
-
-1. Clonar el repositorio.
-2. Asegurarte de copiar el archivo `.env.example` y renombrarlo a `.env` en la raíz del proyecto.
-3. Abrir una terminal en la raíz del proyecto y ejecutar:
-
-```bash
-docker-compose up -d --build
-```
-
-Esto levantará los siguientes servicios automáticamente:
-- **Base de Datos (PostgreSQL)** en el puerto `5432`
-- **Backend (.NET API)** en el puerto `8080`
-- **Frontend (Angular)** en el puerto `4200` (accesible vía Nginx).
+Los servicios quedarán disponibles de inmediato en:
+- 🌐 **Frontend (Angular 17 SPA):** `http://localhost:4200`
+- ⚡ **Backend REST API (.NET 8):** `http://localhost:8080/api`
+- 🗄️ **Base de Datos (PostgreSQL 15):** `localhost:5432`
 
 Para detener y limpiar los contenedores:
 ```bash
 docker-compose down -v
 ```
 
-## 4. Variables de Entorno
+---
 
-El proyecto se configura mediante un archivo `.env` en la raíz (para Docker) o a través de las variables de entorno / `appsettings.json` en ejecución local. El archivo `.env.example` contiene los valores por defecto que se utilizarán para inicializar el contenedor de Postgres y el Backend. No existen secretos versionados en este repositorio.
+### Opción B: Ejecución Local (Manual)
 
-## 5. Ejecutar Migraciones
+**Requisitos:** .NET 8 SDK, Node.js v20+, Angular CLI 17, PostgreSQL 15+.
 
-**Si usas Docker:**
-Las migraciones se ejecutan automáticamente al arrancar el contenedor del backend (implementado en el pipeline de inicio de la API), generando la estructura de la base de datos de manera automatizada para mayor comodidad.
+1. **Base de Datos:** Crear una BD PostgreSQL llamada `kanban_db`.
+2. **Backend:**
+   ```bash
+   cd backend
+   dotnet ef database update --project Kanban.Infrastructure --startup-project Kanban.WebApi
+   dotnet run --project Kanban.WebApi
+   ```
+3. **Frontend:**
+   ```bash
+   cd frontend
+   npm install
+   ng serve
+   ```
 
-**Si usas Local:**
-Abre una terminal en `/backend` y ejecuta:
-```bash
-dotnet ef database update --project Kanban.Infrastructure --startup-project Kanban.WebApi
+---
+
+## 🔑 2. Usuarios de Prueba (Data Seeding)
+
+La base de datos se inicializa automáticamente mediante **EF Core Migrations Data Seeding** con los siguientes usuarios cifrados mediante **BCrypt** (coste 11):
+
+| Usuario | Correo Electrónico | Contraseña | Rol / Propósito |
+| :--- | :--- | :--- | :--- |
+| **Usuario 1** | `admin@kanban.com` | `Password123!` | Administrador / Pruebas multi-sesión |
+| **Usuario 2** | `tester@kanban.com` | `Password123!` | Evaluador / Pruebas de tiempo real |
+
+---
+
+## 🏗️ 3. Arquitectura y Estructura del Sistema
+
+El aplicativo implementa **Arquitectura Hexagonal (Puertos y Adaptadores)** en el Backend y una estructura modular limpia por capas en el Frontend Angular.
+
+### Estructura de Carpetas
+
+```text
+Kanban_SamVP/
+├── backend/
+│   ├── Kanban.Domain/          # Núcleo de Dominio (Entidades puras, Interfaces de repositorios)
+│   ├── Kanban.Application/     # Casos de Uso (DTOs, Servicios de Negocio, Reportes Strategy)
+│   ├── Kanban.Infrastructure/  # Adaptadores (DbContext EF Core, Repositorios, QuestPDF, EPPlus)
+│   └── Kanban.WebApi/          # Presentación HTTP (Controllers REST, Hubs SignalR, Program.cs)
+│
+├── frontend/src/
+│   ├── app/
+│   │   ├── core/               # ⚙️ Servicios globales (auth.service, kanban.service, guard, interceptor)
+│   │   ├── features/           # 🧩 Módulos de negocio (projects-list, board kanban)
+│   │   ├── pages/              # 📄 Páginas de sistema (login, access denied, not found 404)
+│   │   ├── layout/             # 🎨 Layout Sakai (app.layout, topbar, sidebar, footer)
+│   │   ├── app-routing.module.ts
+│   │   └── app.module.ts
+│   └── assets/                 # 🖼️ Recursos estáticos (imágenes SVG, estilos SCSS)
+│
+├── docker-compose.yml
+└── README.md
 ```
 
-## 6. Usuarios de Prueba
+### Limpieza y Refactorización del Frontend (Plantilla Sakai)
+Para evitar archivos irrelevantes y garantizar la mantenibilidad del código:
+1. **Depuración de carpetas demo:** Se eliminaron las carpetas residuales `src/app/demo` y `src/assets/demo`.
+2. **Organización en `pages/`:** Las páginas de autenticación (Login, Access Denied) y error (Not Found 404) se trasladaron a `src/app/pages/`.
+3. **Remoción del configurador de temas:** Se eliminó la rueda flotante `<app-config>` que modificaba colores en caliente, dejando la interfaz limpia y enfocada en el tablero Kanban.
 
-La base de datos se inicializa automáticamente (mediante Data Seeding en las migraciones) con los siguientes usuarios de prueba:
+### Principios SOLID Aplicados
 
-- **Usuario 1:** admin@kanban.com / Contraseña: `Password123!`
-- **Usuario 2:** tester@kanban.com / Contraseña: `Password123!`
+- **Single Responsibility Principle (SRP):** Controladores atienden HTTP, Servicios ejecutan reglas de negocio, Repositorios gestionan persistencia y Generadores construyen archivos de reporte.
+- **Open/Closed Principle (OCP):** El sistema de reportes utiliza el **Patrón Strategy / Factory**. Agregar un nuevo formato (ej. CSV) solo requiere crear una clase que implemente `IReportGenerator` sin tocar clases existentes.
+- **Liskov Substitution & Interface Segregation (LSP/ISP):** Inyección de interfaces concisas (`IProyectoRepository`, `IColumnaService`, `IReportGenerator`).
+- **Dependency Inversion Principle (DIP):** Las capas superiores (`Domain` y `Application`) no dependen de frameworks externos ni bases de datos, sino de abstracciones (puertos).
 
-(Las contraseñas se almacenan cifradas en la base de datos utilizando el estándar de la industria **BCrypt** (coste 11), asegurando resistencia contra ataques de fuerza bruta).
+---
 
-## 7. Ejecución por Fases (Metodología de Desarrollo)
+## 💡 4. Decisiones Técnicas de Diseño
 
-El desarrollo del Backend se organizó en 4 fases progresivas y atómicas para garantizar calidad y revisiones incrementales:
+### 1. Sincronización en Tiempo Real: SignalR
+- **Elección:** **ASP.NET Core SignalR**.
+- **Justificación:** Integración nativa de alto rendimiento con .NET y clientes de JS/Angular. Administra reconexión automática, transporte transparente (WebSockets con fallback) y aislamiento de mensajes por grupo de proyecto (`JoinBoardGroup` / `LeaveBoardGroup`).
+- **Alternativas descartadas:**
+  - *Server-Sent Events (SSE):* Descartado por ser unidireccional y requerir peticiones HTTP auxiliares para manejar suscripciones.
+  - *Raw WebSockets:* Descartado por la necesidad de implementar manualmente reconexión, handshakes y manejo de eventos.
+  - *Short Polling:* Descartado por ineficiencia de consultas recurrentes a la base de datos y latencia superior a los 2 segundos requeridos.
 
-1. **Fase 1 (Core y Persistencia):** Definición de las entidades del Dominio (con IDs enteros secuenciales para mayor legibilidad y depuración), mapeo en Entity Framework Core y creación del DbContext con reglas restrictivas y en cascada.
-2. **Fase 2 (Abstracción de Datos):** Implementación de **Puertos y Adaptadores** mediante el patrón genérico `Repository`, aislando la lógica de la base de datos para facilitar testing y futuras migraciones.
-3. **Fase 3 (Lógica y REST):** Creación de la capa de Aplicación (DTOs y Servicios de Negocio) y exposición de endpoints HTTP a través de Controladores en la WebApi.
-4. **Fase 4 (Seguridad):** Bloqueo de endpoints con atributos `[Authorize]`, implementación de un proveedor local de JWT y hashing criptográfico con BCrypt.
+### 2. Estrategia de Ordenamiento: Lexicographical Ranking (Espaciado Flotante)
+- **Elección:** Campo numérico decimal `Orden` (float/double) en tareas y columnas.
+- **Justificación:** Al mover una tarea entre columnas o dentro de la misma columna, la nueva posición se calcula como `(orden_anterior + orden_siguiente) / 2`. Esto **evita reindexar o actualizar masivamente los demás registros en la base de datos** (operación de orden $O(1)$ en lugar de $O(N)$).
 
-## 7. Arquitectura
+### 3. Reportes Duales con Consulta Única (PDF & Excel)
+- **Elección:** QuestPDF (PDF) y EPPlus (Excel) guiados por el patrón **Strategy**.
+- **Optimización SQL:** Se implementó `GetProyectoCompletoReporteAsync` en `ProyectoRepository` con `.Include(p => p.Columnas).ThenInclude(c => c.Tareas).ThenInclude(t => t.Responsable)`. Se efectúa **una sola consulta SQL a la base de datos** para alimentar ambos formatos, resolviendo el problema de consulta N+1.
+- **Filtros Aplicados:** Los reportes aceptan parámetros opcionales (`prioridad`, `responsableId`, `texto`) para exportar exactamente lo que el usuario está visualizando en pantalla.
 
-El backend ha sido construido utilizando **Arquitectura Hexagonal (Puertos y Adaptadores)**, dividida en las siguientes capas:
+### 4. Seguridad y Control de Acceso
+- **Hashes Criptográficos:** Cifrado con **BCrypt** de coste 11 (salting dinámico integrado).
+- **JWT & Interceptor:** Todos los endpoints de negocio exigen token Bearer JWT. El `AuthInterceptor` en Angular adjunta el token y captura automáticamente errores HTTP 401 para cerrar sesión y redirigir al login.
 
-- **Domain:** Contiene las entidades del negocio (`Usuario`, `Proyecto`, `Tarea`, etc.) y las interfaces (puertos) para repositorios. Es agnóstica a la tecnología y **no tiene dependencias externas**.
-- **Application:** Contiene la lógica de negocio, casos de uso y DTOs. Implementa la lógica principal (orquestación). Tampoco conoce detalles de la base de datos ni de la web.
-- **Infrastructure:** Implementa los puertos del dominio (Adaptadores: Repositorios específicos, DbContext de Entity Framework, y algoritmos de Hashing). Si en el futuro se desea migrar de PostgreSQL a MongoDB o SQL Server, solo se modifica o reemplaza esta capa sin tocar el resto del sistema.
-- **WebApi:** Es la capa de presentación (Controladores REST), encargada exclusivamente de mapear peticiones HTTP hacia la capa Application y configurar la Inyección de Dependencias.
+---
 
-El frontend (Angular 17) sigue una arquitectura modular, separando componentes de presentación (UI) de componentes lógicos (smart components), con servicios centralizados para llamadas HTTP y suscripción al canal de tiempo real.
+## 📊 5. Diagrama del Modelo de Base de Datos (ER)
 
-## 8. Decisiones de Diseño
+![Diagrama ER Modelo de Datos](er-diagram.svg)
 
-- **Por qué Arquitectura Hexagonal:** En lugar de una arquitectura de 3 capas tradicional o Clean Architecture rígida, la Arquitectura Hexagonal ofrece el balance perfecto para aplicaciones de mediano a gran tamaño. Permite aislar completamente las reglas de negocio (Domain) de los detalles de implementación (BBDD, Web). Es más pragmática que Clean Architecture (que a veces introduce abstracciones excesivas), enfocándose en Puertos (Interfaces) y Adaptadores (Implementaciones).
-- **Aplicación de Principios SOLID:** El código se estructuró siguiendo firmemente estos principios:
-  - **SRP (Responsabilidad Única):** Separación estricta entre Controladores (exposición HTTP), Servicios (lógica de negocio) y Repositorios (acceso a datos).
-  - **OCP (Abierto/Cerrado):** Uso del Patrón Strategy / Factory para la generación de reportes (PDF/Excel), lo que permite incorporar nuevos formatos a futuro sin tocar el código existente.
-  - **LSP e ISP (Sustitución de Liskov y Segregación de Interfaces):** Uso de interfaces pequeñas y específicas inyectadas por dependencia, permitiendo reemplazar cualquier adaptador técnico (ej. cambiar EF Core por Dapper) sin romper el dominio.
-  - **DIP (Inversión de Dependencias):** El núcleo de la aplicación (`Application` y `Domain`) no depende de la base de datos ni de frameworks web, sino de interfaces (Puertos).
-- **Tiempo Real:** Se optó por **SignalR** porque provee una integración nativa y de altísimo rendimiento con .NET y clientes de Angular/JS.
-- **Gestión del Orden de las Tareas:** Para la persistencia del orden (Drag & Drop), las tareas utilizan un índice decimal/numérico espaciado (Rank) que evita recalcular todos los registros adyacentes cada vez que se mueve una tarjeta. (Estrategia de Lexicographical Ranking o espaciado flotante).
-- **Exportación Dual (PDF/Excel):** Se utiliza el **Patrón Strategy / Factory** junto con un único DTO, garantizando que el origen de los datos se consulte una sola vez y permitiendo que agregar futuros formatos (ej. CSV) sea tan fácil como crear una nueva clase que implemente la interfaz exportadora sin modificar código existente.
+---
 
-## 9. Tecnologías
+## ⭐ 6. Funcionalidades Destacadas del Sistema
 
-- **Frontend:** Angular 17, TypeScript, SCSS, PrimeNG (Sakai Template).
-- **Backend:** .NET 8 (C#).
-- **Persistencia:** PostgreSQL + Entity Framework Core.
-- **Reportes:** QuestPDF (PDF), ClosedXML (Excel).
-- **Tiempo Real:** ASP.NET Core SignalR.
+1. **Gestión de Proyectos:** CRUD completo con listado paginado y filtro por coincidencia parcial resuelto en servidor.
+2. **Tablero Kanban Dinámico:** Movimiento de tareas por arrastre y soltar (Drag & Drop) con actualización optimista e instantánea.
+3. **Reordenación de Columnas:** Posibilidad de ajustar el orden de las columnas desde la interfaz web.
+4. **Sincronización en Tiempo Real:** Actualizaciones instantáneas en sesiones múltiples sin recargar pantalla.
+5. **Indicador de Usuarios Conectados (Opcional +5%):** Conteo activo en tiempo real de usuarios presentes en el mismo tablero.
+6. **Búsqueda y Filtros Combinados (Opcional +5%):** Filtro de tareas por texto en tiempo real y selectores por Prioridad (Alta/Media/Baja) y Responsable, con botón de limpiado rápido.
+7. **Diseño Sakai Depurado:** Plantilla Sakai de PrimeNG optimizada con modales nativos `<p-confirmDialog>` e `InputTextarea` adaptativo.
 
-## 10. Diagrama ER
+---
 
-```mermaid
-erDiagram
-    Usuario ||--o{ Tarea : "es asignado a"
-    Proyecto ||--o{ Columna : "contiene"
-    Columna ||--o{ Tarea : "agrupa"
+## 🤖 7. Declaración del Uso de Asistentes de Inteligencia Artificial (IA)
 
-    Usuario {
-        int Id PK
-        string Nombre
-        string Correo
-        string PasswordHash
-        string PasswordSalt
-    }
+En cumplimiento de las reglas de la prueba técnica (Sección 9), se declara el uso responsable y supervisado de **Antigravity AI (Gemini 3.6 Flash / Agentic Assistant)** en las siguientes tareas:
 
-    Proyecto {
-        int Id PK
-        string Nombre
-        string Descripcion
-        datetime FechaInicio
-        datetime FechaFinPrevista
-        string Estado
-    }
-
-    Columna {
-        int Id PK
-        string Nombre
-        float Orden
-        int ProyectoId FK
-    }
-
-    Tarea {
-        int Id PK
-        string Titulo
-        string Descripcion
-        string Prioridad
-        int ResponsableId FK "Nullable"
-        int ColumnaId FK
-        float Orden
-        datetime FechaCreacion
-    }
-```
-
-## 11. Uso de IA
-
-*(Se documentará al final de la prueba detallando si se hizo uso de herramientas de IA durante el desarrollo, en qué partes y bajo qué contexto)*
+1. **Estructura Arquitectónica:** Apoyo en el maquetado inicial de la Arquitectura Hexagonal en .NET 8 y la modularización en Angular 17.
+2. **Optimización de Consultas SQL:** Refactorización del servicio de reportes para implementar la consulta única EF Core con `.Include().ThenInclude()` eliminando peticiones N+1.
+3. **Manejo de Errores HTTP:** Implementación del patrón de captura 401 en `AuthInterceptor`.
+4. **Sincronización Tiempo Real:** Configuración de concurrencia (`ConcurrentDictionary`) en SignalR para el conteo de usuarios online.
