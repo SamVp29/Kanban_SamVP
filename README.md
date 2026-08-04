@@ -14,7 +14,7 @@ El proyecto está 100% contenedorizado con **Docker** y **Docker Compose** para 
 
 1. Clonar el repositorio:
    ```bash
-   git clone https://github.com/tu-usuario/Kanban_SamVP.git
+   git clone https://github.com/SamVp29/Kanban_SamVP.git
    cd Kanban_SamVP
    ```
 2. Asegurar que el archivo `.env` existe en la raíz (puedes duplicar `.env.example`):
