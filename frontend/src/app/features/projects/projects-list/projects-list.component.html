@@ -1,4 +1,5 @@
 <p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
 <div class="grid">
     <div class="col-12">
@@ -67,7 +68,7 @@
         
         <div class="field">
             <label for="descripcion">Descripción</label>
-            <textarea id="descripcion" pInputTextarea [(ngModel)]="project.descripcion" required rows="3" cols="20"></textarea>
+            <textarea id="descripcion" pInputTextarea [(ngModel)]="project.descripcion" rows="4" [autoResize]="true"></textarea>
         </div>
         
         <div class="field">
@@ -82,11 +83,7 @@
         
         <div class="field">
             <label for="estado">Estado</label>
-            <select id="estado" pInputText [(ngModel)]="project.estado">
-                <option value="Activo">Activo</option>
-                <option value="Pausado">Pausado</option>
-                <option value="Completado">Completado</option>
-            </select>
+            <p-dropdown [options]="estados" [(ngModel)]="project.estado" optionLabel="label" optionValue="value" appendTo="body"></p-dropdown>
         </div>
     </ng-template>
     

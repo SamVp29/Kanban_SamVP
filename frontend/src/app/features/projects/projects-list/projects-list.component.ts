@@ -7,10 +7,13 @@ import { TableModule, TableLazyLoadEvent } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
 import { RippleModule } from 'primeng/ripple';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputTextareaModule } from 'primeng/inputtextarea';
+import { DropdownModule } from 'primeng/dropdown';
 import { DialogModule } from 'primeng/dialog';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { FormsModule } from '@angular/forms';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
 
 @Component({
   selector: 'app-projects-list',
@@ -21,11 +24,14 @@ import { MessageService } from 'primeng/api';
     ButtonModule, 
     RippleModule, 
     InputTextModule, 
+    InputTextareaModule,
+    DropdownModule,
     DialogModule, 
+    ConfirmDialogModule,
     FormsModule,
     ToastModule
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './projects-list.component.html',
   styleUrls: ['./projects-list.component.scss']
 })
@@ -39,6 +45,12 @@ export class ProjectsListComponent implements OnInit {
   project: Partial<Project> = {};
   submitted: boolean = false;
   
+  estados = [
+    { label: 'Activo', value: 'Activo' },
+    { label: 'Pausado', value: 'Pausado' },
+    { label: 'Completado', value: 'Completado' }
+  ];
+
   // Filtering & Pagination
   lastTableEvent?: TableLazyLoadEvent;
   globalFilter: string = '';
@@ -46,7 +58,8 @@ export class ProjectsListComponent implements OnInit {
   constructor(
     private projectService: ProjectService,
     private router: Router,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private confirmationService: ConfirmationService
   ) { }
 
   ngOnInit(): void {
@@ -105,17 +118,25 @@ export class ProjectsListComponent implements OnInit {
   }
 
   deleteProject(p: Project) {
-    if (confirm(`¿Estás seguro de eliminar el proyecto ${p.nombre}?`)) {
-      this.projectService.deleteProject(p.id).subscribe({
-        next: () => {
-          this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Proyecto eliminado' });
-          if (this.lastTableEvent) this.loadProjects(this.lastTableEvent);
-        },
-        error: () => {
-          this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el proyecto' });
-        }
-      });
-    }
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de eliminar el proyecto "${p.nombre}"?`,
+      header: 'Confirmar Eliminación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.projectService.deleteProject(p.id).subscribe({
+          next: () => {
+            this.messageService.add({ severity: 'success', summary: 'Éxito', detail: 'Proyecto eliminado' });
+            if (this.lastTableEvent) this.loadProjects(this.lastTableEvent);
+          },
+          error: () => {
+            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el proyecto' });
+          }
+        });
+      }
+    });
   }
 
   saveProject() {

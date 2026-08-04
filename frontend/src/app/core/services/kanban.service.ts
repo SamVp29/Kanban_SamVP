@@ -15,6 +15,7 @@ export class KanbanService {
   private hubConnection: signalR.HubConnection | undefined;
   
   public boardUpdated$ = new BehaviorSubject<void>(undefined);
+  public connectedUsers$ = new BehaviorSubject<number>(1);
 
   constructor(private http: HttpClient, private authService: AuthService) { }
 
@@ -38,6 +39,13 @@ export class KanbanService {
 
   deleteColumn(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/Columnas/${id}`);
+  }
+
+  updateColumnOrder(columnId: number, newOrder: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/Columnas/mover`, {
+      columnaId: columnId,
+      nuevoOrden: newOrder
+    });
   }
 
   getTasksByColumn(columnId: number): Observable<Task[]> {
@@ -64,36 +72,49 @@ export class KanbanService {
     });
   }
 
-  exportBoardToPdf(projectId: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/Reportes/${projectId}?format=pdf`, { responseType: 'blob' });
+  exportBoardToPdf(projectId: number, prioridad?: string | null, responsableId?: number | null, texto?: string | null): Observable<Blob> {
+    let params = `format=pdf`;
+    if (prioridad) params += `&prioridad=${encodeURIComponent(prioridad)}`;
+    if (responsableId) params += `&responsableId=${responsableId}`;
+    if (texto) params += `&texto=${encodeURIComponent(texto)}`;
+    return this.http.get(`${this.apiUrl}/Reportes/${projectId}?${params}`, { responseType: 'blob' });
   }
 
-  exportBoardToExcel(projectId: number): Observable<Blob> {
-    return this.http.get(`${this.apiUrl}/Reportes/${projectId}?format=excel`, { responseType: 'blob' });
+  exportBoardToExcel(projectId: number, prioridad?: string | null, responsableId?: number | null, texto?: string | null): Observable<Blob> {
+    let params = `format=excel`;
+    if (prioridad) params += `&prioridad=${encodeURIComponent(prioridad)}`;
+    if (responsableId) params += `&responsableId=${responsableId}`;
+    if (texto) params += `&texto=${encodeURIComponent(texto)}`;
+    return this.http.get(`${this.apiUrl}/Reportes/${projectId}?${params}`, { responseType: 'blob' });
   }
 
   // --- SignalR Real-Time ---
 
   public startConnection(projectId: number): void {
     const token = this.authService.currentUserValue?.token;
+    const hubUrl = this.apiUrl.replace(/\/api\/?$/, '') + '/hubs/kanban';
     
     this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl('http://localhost:8080/hubs/kanban', {
+      .withUrl(hubUrl, {
         accessTokenFactory: () => token || ''
       })
+      .configureLogging(signalR.LogLevel.Warning)
       .withAutomaticReconnect()
       .build();
 
     this.hubConnection
       .start()
       .then(() => {
-        console.log('SignalR connection started');
         this.hubConnection?.invoke('JoinBoardGroup', projectId.toString());
       })
-      .catch(err => console.log('Error while starting connection: ' + err));
+      .catch(err => console.error('Error while starting connection: ', err));
 
     this.hubConnection.on('BoardUpdated', () => {
       this.boardUpdated$.next();
+    });
+
+    this.hubConnection.on('ConnectedUsersChanged', (count: number) => {
+      this.connectedUsers$.next(count);
     });
   }
 

@@ -1,16 +1,42 @@
 <p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>
 
 <div class="card p-3 shadow-2 border-round-xl">
-    <div class="flex justify-content-between align-items-center mb-4">
+    <div class="flex flex-column md:flex-row justify-content-between align-items-start md:align-items-center mb-4 gap-3">
         <div class="flex align-items-center gap-3">
             <button pButton pRipple icon="pi pi-arrow-left" class="p-button-text p-button-secondary p-button-rounded" routerLink="/projects"></button>
             <h4 class="m-0 font-bold text-color">Tablero Kanban</h4>
+            <span class="p-tag p-tag-success font-medium p-2 border-round-pill flex align-items-center gap-1" pTooltip="Usuarios conectados en tiempo real a este tablero">
+                <i class="pi pi-circle-fill text-green-400 text-xs"></i>
+                <i class="pi pi-users ml-1"></i> {{ connectedUsers }} en línea
+            </span>
         </div>
         <div class="flex gap-2">
             <button pButton pRipple icon="pi pi-file-pdf" class="p-button-outlined p-button-danger" pTooltip="Exportar PDF" (click)="exportPdf()"></button>
             <button pButton pRipple icon="pi pi-file-excel" class="p-button-outlined p-button-success" pTooltip="Exportar Excel" (click)="exportExcel()"></button>
             <button pButton pRipple label="Nueva Columna" icon="pi pi-plus" class="p-button-outlined p-button-secondary ml-2" (click)="openNewColumn()"></button>
         </div>
+    </div>
+
+    <!-- Search and Filters Bar -->
+    <div class="flex flex-column md:flex-row gap-3 mb-4 surface-card p-3 border-round shadow-1 align-items-center">
+        <div class="p-input-icon-left flex-1 w-full">
+            <i class="pi pi-search"></i>
+            <input type="text" pInputText placeholder="Buscar tareas por título o descripción..." [(ngModel)]="searchText" class="w-full" />
+        </div>
+        <div class="w-full md:w-15rem">
+            <p-dropdown [options]="filterPriorities" [(ngModel)]="selectedPriority" optionLabel="label" optionValue="value" placeholder="Prioridad" class="w-full" appendTo="body"></p-dropdown>
+        </div>
+        <div class="w-full md:w-15rem">
+            <p-dropdown [options]="filterUsuarios" [(ngModel)]="selectedResponsableId" optionLabel="label" optionValue="value" placeholder="Responsable" class="w-full" appendTo="body"></p-dropdown>
+        </div>
+        <button *ngIf="searchText || selectedPriority || selectedResponsableId" 
+                pButton pRipple 
+                icon="pi pi-filter-slash" 
+                label="Limpiar" 
+                class="p-button-text p-button-secondary p-button-sm" 
+                (click)="clearFilters()"
+                pTooltip="Limpiar todos los filtros"></button>
     </div>
 
     <!-- Scrollable Board Container -->
@@ -22,11 +48,15 @@
 
         <ng-container *ngIf="!loading">
             <!-- Kanban Column -->
-            <div *ngFor="let col of columns" class="surface-ground border-round-lg shadow-1 flex flex-column flex-shrink-0" style="width: 320px; background: var(--surface-b);">
+            <div *ngFor="let col of columns; let i = index" class="surface-ground border-round-lg shadow-1 flex flex-column flex-shrink-0" style="width: 320px; background: var(--surface-b);">
                 
                 <!-- Column Header -->
                 <div class="p-3 border-bottom-1 surface-border flex justify-content-between align-items-center border-round-top-lg surface-section">
-                    <h6 class="m-0 font-bold text-lg text-color">{{ col.nombre }} <span class="text-500 font-normal ml-2">({{col.tareas?.length || 0}})</span></h6>
+                    <div class="flex align-items-center gap-1">
+                        <button pButton pRipple icon="pi pi-angle-left" class="p-button-text p-button-sm p-button-secondary p-0 w-2rem h-2rem" [disabled]="i === 0" (click)="moveColumnLeft(i)" pTooltip="Mover columna a la izquierda"></button>
+                        <h6 class="m-0 font-bold text-lg text-color">{{ col.nombre }} <span class="text-500 font-normal ml-1">({{ getFilteredTasks(col.tareas).length }})</span></h6>
+                        <button pButton pRipple icon="pi pi-angle-right" class="p-button-text p-button-sm p-button-secondary p-0 w-2rem h-2rem" [disabled]="i === columns.length - 1" (click)="moveColumnRight(i)" pTooltip="Mover columna a la derecha"></button>
+                    </div>
                     <div class="flex gap-1">
                         <button pButton pRipple icon="pi pi-plus" class="p-button-text p-button-sm p-button-success p-button-rounded" (click)="openNewTask(col.id)" pTooltip="Añadir Tarea"></button>
                         <button pButton pRipple icon="pi pi-pencil" class="p-button-text p-button-sm p-button-secondary p-button-rounded" (click)="editColumn(col)" pTooltip="Editar Columna"></button>
@@ -39,12 +69,12 @@
                      cdkDropList [cdkDropListData]="col.tareas" (cdkDropListDropped)="drop($event, col.id)">
                     
                     <!-- Empty State Placeholder -->
-                    <div *ngIf="!col.tareas || col.tareas.length === 0" class="text-center text-500 font-italic py-3">
-                        Arrastra una tarea aquí
+                    <div *ngIf="!col.tareas || col.tareas.length === 0 || getFilteredTasks(col.tareas).length === 0" class="text-center text-500 font-italic py-3">
+                        Sin tareas correspondientes
                     </div>
 
                     <!-- Task Card (Draggable) -->
-                    <div *ngFor="let task of col.tareas" cdkDrag class="surface-card mb-3 p-3 border-round shadow-2 cursor-move hover:shadow-4 transition-duration-200 border-left-3 border-primary">
+                    <div *ngFor="let task of getFilteredTasks(col.tareas)" cdkDrag class="surface-card mb-3 p-3 border-round shadow-2 cursor-move hover:shadow-4 transition-duration-200 border-left-3 border-primary">
                         <div class="flex justify-content-between align-items-start mb-2">
                             <span class="font-bold text-color">{{ task.titulo }}</span>
                             <div class="flex gap-1">

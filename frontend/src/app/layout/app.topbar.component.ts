@@ -24,6 +24,10 @@ export class AppTopBarComponent {
         private router: Router
     ) { }
 
+    get currentUser() {
+        return this.authService.currentUserValue;
+    }
+
     logout() {
         this.authService.logout();
         this.router.navigate(['/auth/login']);

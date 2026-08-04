@@ -3,9 +3,9 @@
         <i class="pi pi-bars"></i>
     </button>
 
-    <a class="layout-topbar-logo" routerLink="">
-        <img src="assets/layout/images/{{layoutService.config().colorScheme === 'light' ? 'logo-dark' : 'logo-white'}}.svg" alt="logo">
-        <span>SAKAI</span>
+    <a class="layout-topbar-logo flex align-items-center gap-2" routerLink="">
+        <i class="pi pi-th-large text-primary text-2xl"></i>
+        <span class="font-bold text-xl">KANBAN AGILE</span>
     </a>
 
     <button #topbarmenubutton class="p-link layout-topbar-menu-button layout-topbar-button" (click)="layoutService.showProfileSidebar()">
@@ -13,17 +13,13 @@
     </button>
 
     <div #topbarmenu class="layout-topbar-menu" [ngClass]="{'layout-topbar-menu-mobile-active': layoutService.state.profileSidebarVisible}">
-        <button class="p-link layout-topbar-button">
-            <i class="pi pi-calendar"></i>
-            <span>Calendar</span>
-        </button>
-        <button class="p-link layout-topbar-button">
-            <i class="pi pi-user"></i>
-            <span>Profile</span>
-        </button>
-        <button class="p-link layout-topbar-button" (click)="logout()">
-            <i class="pi pi-sign-out"></i>
-            <span>Logout</span>
+        <div class="flex align-items-center gap-2 px-3 py-2 text-color font-medium" *ngIf="currentUser">
+            <i class="pi pi-user-circle text-2xl text-primary"></i>
+            <span>{{ currentUser.nombre }}</span>
+        </div>
+        <button class="p-link layout-topbar-button" (click)="logout()" pTooltip="Cerrar Sesión">
+            <i class="pi pi-sign-out text-red-500"></i>
+            <span>Cerrar Sesión</span>
         </button>
     </div>
 </div>

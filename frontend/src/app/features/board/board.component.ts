@@ -14,7 +14,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputTextareaModule } from 'primeng/inputtextarea';
 import { FormsModule } from '@angular/forms';
 import { ToastModule } from 'primeng/toast';
-import { MessageService } from 'primeng/api';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { MessageService, ConfirmationService } from 'primeng/api';
 import { RippleModule } from 'primeng/ripple';
 import { DropdownModule } from 'primeng/dropdown';
 import { TagModule } from 'primeng/tag';
@@ -29,6 +30,7 @@ import { TooltipModule } from 'primeng/tooltip';
     ButtonModule, 
     CardModule, 
     DialogModule, 
+    ConfirmDialogModule,
     InputTextModule,
     InputTextareaModule,
     FormsModule,
@@ -38,7 +40,7 @@ import { TooltipModule } from 'primeng/tooltip';
     TagModule,
     TooltipModule
   ],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   templateUrl: './board.component.html',
   styleUrls: ['./board.component.scss']
 })
@@ -57,24 +59,43 @@ export class BoardComponent implements OnInit, OnDestroy {
   colForm: Partial<Column> = {};
   submitted = false;
 
+  // Filters & State
+  searchText = '';
+  selectedPriority: string | null = null;
+  selectedResponsableId: number | null = null;
+  connectedUsers = 1;
+
   priorities = [
     { label: 'Alta', value: 'Alta' },
     { label: 'Media', value: 'Media' },
     { label: 'Baja', value: 'Baja' }
   ];
 
+  filterPriorities = [
+    { label: 'Todas las prioridades', value: null },
+    { label: 'Alta', value: 'Alta' },
+    { label: 'Media', value: 'Media' },
+    { label: 'Baja', value: 'Baja' }
+  ];
+
   usuarios: any[] = [];
+  filterUsuarios: any[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private kanbanService: KanbanService,
-    private messageService: MessageService
+    private messageService: MessageService,
+    private confirmationService: ConfirmationService
   ) { }
 
   ngOnInit(): void {
     this.kanbanService.getUsuarios().subscribe({
       next: (users) => {
         this.usuarios = users.map(u => ({ label: u.nombre, value: u.id }));
+        this.filterUsuarios = [
+          { label: 'Todos los responsables', value: null },
+          ...this.usuarios
+        ];
       }
     });
 
@@ -90,6 +111,12 @@ export class BoardComponent implements OnInit, OnDestroy {
              this.loadBoard(); 
           })
         );
+
+        this.subs.add(
+          this.kanbanService.connectedUsers$.subscribe(count => {
+            this.connectedUsers = count;
+          })
+        );
       }
     });
   }
@@ -99,6 +126,12 @@ export class BoardComponent implements OnInit, OnDestroy {
     if (this.projectId) {
       this.kanbanService.stopConnection(this.projectId);
     }
+  }
+
+  clearFilters() {
+    this.searchText = '';
+    this.selectedPriority = null;
+    this.selectedResponsableId = null;
   }
 
   loadBoard(): void {
@@ -125,6 +158,52 @@ export class BoardComponent implements OnInit, OnDestroy {
         this.loading = false;
         this.messageService.add({severity:'error', summary: 'Error', detail: 'No se pudo cargar el tablero'});
       }
+    });
+  }
+
+  getFilteredTasks(tasks: Task[]): Task[] {
+    if (!tasks) return [];
+    return tasks.filter(t => {
+      const matchText = !this.searchText || 
+        t.titulo.toLowerCase().includes(this.searchText.toLowerCase()) || 
+        t.descripcion.toLowerCase().includes(this.searchText.toLowerCase());
+      
+      const matchPriority = !this.selectedPriority || t.prioridad === this.selectedPriority;
+      const matchResponsable = !this.selectedResponsableId || t.responsableId === this.selectedResponsableId;
+
+      return matchText && matchPriority && matchResponsable;
+    });
+  }
+
+  moveColumnLeft(index: number) {
+    if (index <= 0) return;
+    const current = this.columns[index];
+    const prev = this.columns[index - 1];
+    
+    const prevPrevOrder = index - 2 >= 0 ? this.columns[index - 2].orden : 0;
+    const newOrder = (prevPrevOrder + prev.orden) / 2;
+    
+    current.orden = newOrder;
+    this.columns.sort((a, b) => a.orden - b.orden);
+
+    this.kanbanService.updateColumnOrder(current.id, newOrder).subscribe({
+      error: () => this.loadBoard()
+    });
+  }
+
+  moveColumnRight(index: number) {
+    if (index >= this.columns.length - 1) return;
+    const current = this.columns[index];
+    const next = this.columns[index + 1];
+    
+    const nextNextOrder = index + 2 < this.columns.length ? this.columns[index + 2].orden : next.orden + 65536;
+    const newOrder = (next.orden + nextNextOrder) / 2;
+
+    current.orden = newOrder;
+    this.columns.sort((a, b) => a.orden - b.orden);
+
+    this.kanbanService.updateColumnOrder(current.id, newOrder).subscribe({
+      error: () => this.loadBoard()
     });
   }
 
@@ -192,12 +271,21 @@ export class BoardComponent implements OnInit, OnDestroy {
       this.messageService.add({severity:'warn', summary: 'Advertencia', detail: 'No se puede eliminar una columna con tareas.'});
       return;
     }
-    if (confirm(`¿Eliminar la columna ${col.nombre}?`)) {
-      this.kanbanService.deleteColumn(col.id).subscribe({
-        next: () => this.loadBoard(), // Wait for SignalR or reload
-        error: (err) => this.messageService.add({severity:'error', summary: 'Error', detail: err.error?.message || 'Error al eliminar'})
-      });
-    }
+
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de eliminar la columna "${col.nombre}"?`,
+      header: 'Confirmar Eliminación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.kanbanService.deleteColumn(col.id).subscribe({
+          next: () => this.loadBoard(),
+          error: (err) => this.messageService.add({severity:'error', summary: 'Error', detail: err.error?.message || 'Error al eliminar'})
+        });
+      }
+    });
   }
 
   // --- Task CRUD ---
@@ -213,11 +301,19 @@ export class BoardComponent implements OnInit, OnDestroy {
   }
 
   deleteTask(task: Task) {
-    if (confirm(`¿Eliminar la tarea ${task.titulo}?`)) {
-      this.kanbanService.deleteTask(task.id).subscribe(() => {
-        this.loadBoard();
-      });
-    }
+    this.confirmationService.confirm({
+      message: `¿Estás seguro de eliminar la tarea "${task.titulo}"?`,
+      header: 'Confirmar Eliminación',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Sí, eliminar',
+      rejectLabel: 'Cancelar',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => {
+        this.kanbanService.deleteTask(task.id).subscribe(() => {
+          this.loadBoard();
+        });
+      }
+    });
   }
 
   saveTask() {
@@ -251,7 +347,7 @@ export class BoardComponent implements OnInit, OnDestroy {
   }
 
   exportPdf() {
-    this.kanbanService.exportBoardToPdf(this.projectId).subscribe({
+    this.kanbanService.exportBoardToPdf(this.projectId, this.selectedPriority, this.selectedResponsableId, this.searchText).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -265,7 +361,7 @@ export class BoardComponent implements OnInit, OnDestroy {
   }
 
   exportExcel() {
-    this.kanbanService.exportBoardToExcel(this.projectId).subscribe({
+    this.kanbanService.exportBoardToExcel(this.projectId, this.selectedPriority, this.selectedResponsableId, this.searchText).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
