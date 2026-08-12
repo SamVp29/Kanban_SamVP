@@ -108,7 +108,7 @@ export class BoardComponent implements OnInit, OnDestroy {
         
         this.subs.add(
           this.kanbanService.boardUpdated$.subscribe(() => {
-             this.loadBoard(); 
+             this.loadBoard(true); 
           })
         );
 
@@ -134,8 +134,18 @@ export class BoardComponent implements OnInit, OnDestroy {
     this.selectedResponsableId = null;
   }
 
-  loadBoard(): void {
-    this.loading = true;
+  trackByColumnId(index: number, col: Column): number {
+    return col.id;
+  }
+
+  trackByTaskId(index: number, task: Task): number {
+    return task.id;
+  }
+
+  loadBoard(silent: boolean = false): void {
+    if (!silent) {
+      this.loading = true;
+    }
     this.kanbanService.getColumns(this.projectId).pipe(
       switchMap(columns => {
         if (columns.length === 0) return of([]);
@@ -187,7 +197,7 @@ export class BoardComponent implements OnInit, OnDestroy {
     this.columns.sort((a, b) => a.orden - b.orden);
 
     this.kanbanService.updateColumnOrder(current.id, newOrder).subscribe({
-      error: () => this.loadBoard()
+      error: () => this.loadBoard(true)
     });
   }
 
@@ -203,7 +213,7 @@ export class BoardComponent implements OnInit, OnDestroy {
     this.columns.sort((a, b) => a.orden - b.orden);
 
     this.kanbanService.updateColumnOrder(current.id, newOrder).subscribe({
-      error: () => this.loadBoard()
+      error: () => this.loadBoard(true)
     });
   }
 
@@ -232,7 +242,7 @@ export class BoardComponent implements OnInit, OnDestroy {
             task.columnaId = columnId;
             task.orden = order;
             this.kanbanService.updateTaskColumn(task.id, columnId, order).subscribe({
-                error: () => this.loadBoard() // Revert on failure
+                error: () => this.loadBoard(true) // Revert on failure
             });
         }
     });
@@ -281,7 +291,7 @@ export class BoardComponent implements OnInit, OnDestroy {
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.kanbanService.deleteColumn(col.id).subscribe({
-          next: () => this.loadBoard(),
+          next: () => this.loadBoard(true),
           error: (err) => this.messageService.add({severity:'error', summary: 'Error', detail: err.error?.message || 'Error al eliminar'})
         });
       }
@@ -310,7 +320,7 @@ export class BoardComponent implements OnInit, OnDestroy {
       acceptButtonStyleClass: 'p-button-danger',
       accept: () => {
         this.kanbanService.deleteTask(task.id).subscribe(() => {
-          this.loadBoard();
+          this.loadBoard(true);
         });
       }
     });

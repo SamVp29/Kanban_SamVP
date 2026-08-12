@@ -154,6 +154,10 @@ Kanban_SamVP/
 - **Hashes Criptográficos:** Cifrado con **BCrypt** de coste 11 (salting dinámico).
 - **JWT & Interceptor:** Autenticación mediante Tokens Bearer JWT. El `AuthInterceptor` en Angular adjunta el token Bearer en las cabeceras HTTP y gestiona las respuestas 401.
 
+### 5. Optimización de Renderizado en Tiempo Real (Silent Refresh & DOM Reconciliation)
+- **Estrategia Elegida:** Uso de RxJS `Subject` + Carga Silenciosa (`loadBoard(true)`) + Reconciliación del DOM con `trackBy` (`trackByColumnId` y `trackByTaskId`) en Angular 17.
+- **Justificación:** Elimina el parpadeo (flickering) y la destrucción/reconstrucción completa del árbol DOM al recibir notificaciones de SignalR o realizar operaciones de arrastrar y soltar (Drag & Drop). El frontend realiza las consultas REST al backend en segundo plano y actualiza exclusivamente los nodos de tarjetas o columnas modificados.
+
 ---
 
 ## 📊 5. Diagrama del Modelo de Base de Datos (ER)

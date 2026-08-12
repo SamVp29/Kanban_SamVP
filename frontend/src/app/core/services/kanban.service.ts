@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Subject, Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Column } from '../models/column.model';
 import { Task } from '../models/task.model';
@@ -14,7 +14,7 @@ export class KanbanService {
   private apiUrl = `${environment.apiUrl}`;
   private hubConnection: signalR.HubConnection | undefined;
   
-  public boardUpdated$ = new BehaviorSubject<void>(undefined);
+  public boardUpdated$ = new Subject<void>();
   public connectedUsers$ = new BehaviorSubject<number>(1);
 
   constructor(private http: HttpClient, private authService: AuthService) { }

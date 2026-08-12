@@ -48,7 +48,7 @@
 
         <ng-container *ngIf="!loading">
             <!-- Kanban Column -->
-            <div *ngFor="let col of columns; let i = index" class="surface-ground border-round-lg shadow-1 flex flex-column flex-shrink-0" style="width: 320px; background: var(--surface-b);">
+            <div *ngFor="let col of columns; let i = index; trackBy: trackByColumnId" class="surface-ground border-round-lg shadow-1 flex flex-column flex-shrink-0" style="width: 320px; background: var(--surface-b);">
                 
                 <!-- Column Header -->
                 <div class="p-3 border-bottom-1 surface-border flex justify-content-between align-items-center border-round-top-lg surface-section">
@@ -74,7 +74,7 @@
                     </div>
 
                     <!-- Task Card (Draggable) -->
-                    <div *ngFor="let task of getFilteredTasks(col.tareas)" cdkDrag class="surface-card mb-3 p-3 border-round shadow-2 cursor-move hover:shadow-4 transition-duration-200 border-left-3 border-primary">
+                    <div *ngFor="let task of getFilteredTasks(col.tareas); trackBy: trackByTaskId" cdkDrag class="surface-card mb-3 p-3 border-round shadow-2 cursor-move hover:shadow-4 transition-duration-200 border-left-3 border-primary">
                         <div class="flex justify-content-between align-items-start mb-2">
                             <span class="font-bold text-color">{{ task.titulo }}</span>
                             <div class="flex gap-1">
